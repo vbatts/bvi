@@ -4,10 +4,11 @@
  * 1990-09-04  V 1.1.0
  * 2000-05-31  V 1.3.0 beta
  * 2000-10-18  V 1.3.0 final
+ * 2002-01-16  V 1.3.1
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1990-2000 by Gerhard Buergmann
+ * Copyright 1990-2002 by Gerhard Buergmann
  * Gerhard.Buergmann@altavista.net
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -35,17 +36,18 @@
 #else
 #	define PRINTF	printf
 #ifndef HELPFILE
-#	define HELPFILE "/usr/local/lib/bmore.help"
+#	define HELPFILE "/usr/local/share/bmore.help"
 #endif
 #endif
 
 #include "bmore.h"
 
-char	*copyright  = "Copyright (C) 1990-2000 by Gerhard Buergmann";
+char	*copyright  = "Copyright (C) 1990-2002 by Gerhard Buergmann";
 
 int		maxx, maxy;
 char	*name = NULL;
-char	sstring[MAXCMD] = "";
+char	sstring[MAXCMD] = "";	/* string for search */
+char	estring[MAXCMD] = "";	/* string for shell escape */
 char	string[MAXCMD];
 FILE	*curr_file = NULL, *help_file;
 int		AnzAdd;
@@ -186,7 +188,7 @@ main(argc, argv)
 	strcpy(addr_form,  "%08lX  ");
 
 	if (ascii_flag)
-		 out_len = ((maxx - AnzAdd - 1) / 4) * 4;
+		out_len = ((maxx - AnzAdd - 1) / 4) * 4;
 	else
 		out_len = ((maxx - AnzAdd - 1) / 16) * 4;
 
@@ -195,6 +197,7 @@ main(argc, argv)
 
 	if (no_tty) {
 		while(!printout(1));
+		fclose(curr_file);
 		reset_tty();
 		exit(0);
 	}
@@ -260,6 +263,7 @@ main(argc, argv)
 		case 'q':
 		case 'Q':
 					clreol();
+					fclose(curr_file);
 					reset_tty();
 					exit(0);
 		case ':' :	
@@ -292,29 +296,38 @@ main(argc, argv)
 						break;
 					case 'q':
 						clreol();
+						fclose(curr_file);
 						reset_tty();
 						exit(0);
 						break;
 					case '!':
 						if (!no_intty) {
 							clreol();
-							if (rdline(ch)) break;
-							doshell(sstring);
+							if (rdline(colon, estring)) break;
+							doshell(estring);
 							PRINTF("------------------------\r\n");
 							break;
 						}
 					default:
-						beep();
+						bmbeep();
 					}
 					break;
+		case '!':
+			if (!no_intty) {
+				clreol();
+				if (rdline(ch, estring)) break;
+				doshell(estring);
+				PRINTF("------------------------\r\n");
+				break;
+			}
 		case 'd':	/* Scroll k lines [current scroll size, initially 11]* */
-		case CTRL('D'):
+		case BVICTRL('D'):
 					if (precount > 0) d_line = precount;
 					to_print = d_line;
 					break;
-		case CTRL('L'):   	/*** REDRAW SCREEN ***/
+		case BVICTRL('L'):   	/*** REDRAW SCREEN ***/
 					if (no_intty) {
-						beep();
+						bmbeep();
 					} else {
 						clrscr();
 						to_print = maxy + 1;
@@ -323,9 +336,9 @@ main(argc, argv)
 					}
 					break;
 		case 'b':		/* Skip backwards k screenfuls of text [1] */
-		case CTRL('B'):
+		case BVICTRL('B'):
 					if (no_intty) {
-						beep();
+						bmbeep();
 					} else {
 						if (precount < 1) precount = 1;
 						PRINTF("...back %ld page", precount);
@@ -364,12 +377,13 @@ main(argc, argv)
 					break;
 		case '\\':  
 					if (ascii_flag) {
-						beep();
+						bmbeep();
 						break;
 					}
 		case '/':	/**** Search String ****/
 					if (!repeat) {
-						if (rdline(ch)) break;
+						clreol();
+						if (rdline(ch, sstring)) break;
 					}
 		case 'n': 		/**** Search Next ****/
 		case 'N':   
@@ -380,7 +394,7 @@ main(argc, argv)
 					break;
 		case '\'':   
 					if (no_intty) {
-						beep();
+						bmbeep();
 					} else {
 						bytepos = last_search;
 						fseek(curr_file, bytepos, SEEK_SET);
@@ -431,7 +445,7 @@ main(argc, argv)
 					if (d_flag) {
 						emsg("[Press 'h' for instructions.]");
 					} else {
-						beep();
+						bmbeep();
 					}
 					break;
 		}
@@ -445,13 +459,18 @@ main(argc, argv)
 
 
 int
-rdline(ch)
-	int	ch;
+rdline(ch, sstring)
+	int		ch;
+	char	*sstring;
 {
-	int	i = 0;
-	int	ch1 = 0;
-	
-	clreol();
+	int		i = 0;
+	int		ch1 = 0;
+	char	bstring[MAXCMD];
+
+	if (ch == '!') {
+		strcpy(bstring, sstring);
+		sstring[0] = '\0';
+	}
 	putchar(ch);
 	fflush(stdout);
 
@@ -468,6 +487,15 @@ rdline(ch)
 				ch1 = ESC;
 				break;
 			}
+		} else if (ch1 == '!' && i == 0) {
+			if (bstring[0] == '\0') {
+				emsg("No previous command");
+				return 1;
+			}
+			putchar(ch1);
+			PRINTF("\r%c%s", ch, bstring);
+			strcat(sstring, bstring);
+			i = strlen(sstring);
 		} else {
 			putchar(ch1);
 			sstring[i++] = ch1;
@@ -490,6 +518,7 @@ do_next(n)
 {
 	if (numfiles) {
 		if (n == 1 && file_nr == numfiles) {
+			fclose(curr_file);
 			reset_tty();
 			exit(0);
 		}
@@ -503,6 +532,7 @@ do_next(n)
 		free(name);
 		name = strdup(*(files + file_nr - 1));
 	} else {
+		fclose(curr_file);
 		reset_tty();
 		exit(0);
 	}
@@ -526,7 +556,7 @@ open_file(name)
 	}
 	if (curr_file != NULL) fclose(curr_file);
 	if ((curr_file = fopen(name, "rb")) == NULL) {
-		reset_tty();
+		/* reset_tty(); */
 		perror(name);
 		exit(1);
 	}
@@ -553,6 +583,13 @@ putline(buf, num)
 			*(string + print_pos) = ch;
 		else
 			*(string + print_pos) = '.';
+	}
+	for (; print_pos < out_len; print_pos++) {
+		if (!ascii_flag) {
+		    PRINTF("   ");
+		}
+		++bytepos;
+		*(string + print_pos) = ' ';
 	}
 	*(string + num) = '\0';
 	PRINTF("%s\r\n", string);
@@ -792,11 +829,11 @@ bmsearch(ch)
 				PRINTF("\r\nPattern not found\r\n");
 				do_next(1);
 			} else {
+/*
 sprintf(string, "Pattern not found %d - %ul", i, (unsigned long)bytepos);
 emsg(string);
-/*
-				emsg("Pattern not found");
 */
+				emsg("Pattern not found");
 				bytepos = oldpos;
 				fseek(curr_file, bytepos, SEEK_SET);
 				break;
@@ -824,4 +861,10 @@ emsg(s)
 	normvideo();
 	fflush(stdout);
 	prompt = 0;
+}
+
+
+void
+bmbeep() {
+	putchar(7);
 }

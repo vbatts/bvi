@@ -6,6 +6,10 @@ Peter J. Holzer <hjp@wsr.ac.at> setlocale
 Albert Chin-A-Young <china@thewrittenword.com> Makefile.in
 Ralf <rks@ffm.tc.iot.dtag.de> AIX fixes
 Claudio Nieder <claudio@chili.symmetrix.ch> Makefile
+Nico Schmidt <Nico.Schmidt@ipk.fhg.de> r-bug fix
+Steve Waltner <swaltner@lsil.com> Mac OS X support
+Andre Wobst <Andre.Wobst@Physik.Uni-Augsburg.de> AIX fixes
+SimoN <simontdd@netzero.net> bmore: subshell support fixes
 
 Packages:
 Christian "naddy" Weisgerber <naddy@mips.rhein-neckar.de> Source RPM

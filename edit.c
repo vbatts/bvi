@@ -7,8 +7,9 @@
  * 1999-10-30 V 1.2.0 final
  * 2000-05-14 V 1.3.0 alpha
  * 2000-07-15 V 1.3.0 final
+ * 2001-12-07 V 1.3.1
  *
- * Copyright 1996-2000 by Gerhard Buergmann
+ * Copyright 1996-2001 by Gerhard Buergmann
  * Gerhard.Buergmann@altavista.net
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -111,7 +112,7 @@ edit(mode)
 			setcur();
 			continue;
 		}
-		if (ch == KEY_BACKSPACE || ch == CTRL('H')) {
+		if (ch == KEY_BACKSPACE || ch == BVICTRL('H')) {
 			if (count > 0) {
 				len--;
 				count--;
@@ -142,7 +143,7 @@ edit(mode)
 						ch1 = -1;
 					}
 				} while (ch1 == -1);
-				rep_buf[len++] = ch;
+				rep_buf[len++] = ch1;
 				mvaddch(y, x + 1, ch1);
 				sprintf(tmpbuf, "%c%c", ch, ch1);
 				sscanf(tmpbuf, "%2x", &ch);
@@ -747,7 +748,7 @@ do_delete(n, start)
 	memmove(start, start + undo_count, maxpos - (start + undo_count));
 	filesize -= undo_count;
 	maxpos -= undo_count;
-	if (start == maxpos) {
+	if (start == maxpos && start > mem) {
 		start--;
 		cur_back();
 	}
@@ -893,5 +894,5 @@ do_mark(mark, addr)
 void
 movebyte()
 {
-	emsg("Command disabled@- use ':set memmove' to enable");
+	emsg("Command disabled@- use ':set memmove' to enable ");
 }

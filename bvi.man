@@ -5,7 +5,7 @@ NAME
        bvi, bview - visual display editor for binary files
 
 VERSION
-       bvi-1.2.0
+       bvi-1.3.1
 
 SYNOPSIS
        bvi   [-R] [-c cmd] [-f script] file...
@@ -385,7 +385,7 @@ AUTHOR
        Gerhard.Buergmann@altavista.net
 
 WWW
-       Bvi Homepage:  http://bvi.linuxave.net/
+       Bvi Homepage:  http://bvi.sourceforge.net/
        Vi Pages:      http://www.math.fu-berlin.de/~guckes/vi/
                       (all about Vi and its clones)
 
@@ -401,4 +401,4 @@ SEE ALSO
        vi(1), strings(1), ascii(5)
 
 
-31/Oct/99               BVI Version 1.2.0                       8
+3/Jan/2002             BVI Version 1.3.1                       8

@@ -7,10 +7,11 @@
  * 1999-08-21  V 1.2.0 final
  * 2000-05-31  V 1.3.0 beta
  * 2000-10-04  V 1.3.0 final
+ * 2002-01-16  V 1.3.1  
  *
  *  NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2000 by Gerhard Buergmann
+ * Copyright 1996-2002 by Gerhard Buergmann
  * Gerhard.Buergmann@altavista.net
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -47,10 +48,11 @@
 #	include <unistd.h>
 #if HAVE_NCURSES_H
 #   include <ncurses.h>
+#	include <ncurses/term.h>
 #else
 #   include <curses.h>
+#	include <term.h>
 #endif 
-#include <term.h>
 #endif
 
 /* defines for filemode */
@@ -76,9 +78,7 @@
 #define	ESC			27
 #define SEARCH		0
 #define REPLACE		1
-#ifndef CTRL
-#	define CTRL(n)		(n&0x1f)
-#endif
+#define BVICTRL(n)		(n&0x1f)
 
 #ifndef NULL
 #	define NULL		((void *)0)
@@ -109,13 +109,11 @@
 	extern FILE *debug_fp;
 #endif
 
-extern	char	*version;
-
-#ifdef NO_SYSERRL
-	extern	char	*sys_errlist[];
+#ifndef HAVE_STRERROR
+	extern  char    *sys_errlist[];
 #endif
 
-
+extern	char	*version;
 extern	int		maxx, maxy;
 extern	int		ignore_case, magic;
 extern	int		no_tty, no_intty;
@@ -126,13 +124,13 @@ extern	int		no_tty, no_intty;
 #ifdef ANSI
 	void	initterm(void), set_tty(void), reset_tty(void);
 	void	clreol(void), clrscr(void), highvideo(void), normvideo(void);
-	void	/* beep(void), */ home(void);
+	void	bmbeep(void), home(void), sig(void);
 	void	doshell(char *), emsg(char *);
 	void	do_next(int);
 	void	open_file(char *);
 	void	bmsearch(int);
 	void	pushback(int, char *);
-	int		printout(int), rdline(int);
+	int		printout(int), rdline(int, char *);
 	int		nextchar(void), vgetc(void);
 	int     sbracket(int, char *, int);
 	int     bmregexec(char *);
@@ -141,7 +139,7 @@ extern	int		no_tty, no_intty;
 #else
 	void	initterm(), set_tty(), reset_tty();
 	void	clreol(), clrscr(), highvideo(), normvideo();
-	void	/* beep(), */ home();
+	void	bmbeep(), home(), sig();
 	void	doshell(), emsg();
 	void	do_next();
 	void	open_file();

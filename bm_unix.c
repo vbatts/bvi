@@ -2,10 +2,11 @@
  *
  * 2000-05-31 V 1.3.0 beta
  * 2000-10-12 V 1.3.0 final
+ * 2002-02-10 V 1.3.1
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2000 by Gerhard Buergmann
+ * Copyright 1996-2002 by Gerhard Buergmann
  * Gerhard.Buergmann@altavista.net
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -32,10 +33,10 @@
 struct termios ostate, nstate;
 
 
-char	*rev_start, *rev_end;/* enter and exit standout mode */
-char	*Home;          /* go to home */
-char	*clear_sc;         /* clear screen */
-char	*erase_ln;       /* erase line */
+char	*rev_start, *rev_end;	/* enter and exit standout mode */
+char	*Home;			/* go to home */
+char	*clear_sc;		/* clear screen */
+char	*erase_ln;		/* erase line */
 
 extern	off_t	bytepos, screen_home;
 extern	FILE	*curr_file;
@@ -44,7 +45,9 @@ int		got_int;
 int     fnum, no_intty, no_tty, slow_tty;
 int     dum_opt, dlines;
 
-
+#ifdef HAVE_NCURSES_H
+#	undef NEED_PUTC_CHAR
+#endif
 /*
  * A real function, for the tputs routine
  */
@@ -75,11 +78,13 @@ initterm()
 	struct  termios nstate;
 
 	no_tty = tcgetattr(fileno(stdout), &ostate);
-	nstate = ostate;
-	nstate.c_lflag &= ~(ICANON|ECHO|ECHOE|ECHOK|ECHONL);
-	nstate.c_cc[VMIN] = 1;
-	nstate.c_cc[VTIME] = 0;
-	tcsetattr(fileno(stdin), TCSADRAIN, &nstate);
+	if (!no_tty) {
+		nstate = ostate;
+		nstate.c_lflag &= ~(ICANON|ECHO|ECHOE|ECHONL);
+		nstate.c_cc[VMIN] = 1;
+		nstate.c_cc[VTIME] = 0;
+		tcsetattr(fileno(stdin), TCSADRAIN, &nstate);
+	}
 
 	if ((term = getenv("TERM")) == 0 || tgetent(buf, term) <= 0) {
 		printf("Dumb terminal\n");
@@ -98,17 +103,19 @@ initterm()
 	no_intty = tcgetattr(fileno(stdin), &ostate);
 	tcgetattr(fileno(stderr), &ostate);
 	  
-    nstate = ostate;
-    if (!no_tty)
-    	ostate.c_lflag &= ~(ICANON|ECHO);
+	nstate = ostate;
+	if (!no_tty) {
+		ostate.c_lflag &= ~(ICANON|ECHO);
+	}
 }
 
 
 void
 set_tty()
 {
-    ostate.c_lflag &= ~(ICANON|ECHO);
-    stty(fileno(stderr), &ostate);
+	if (no_tty) return;
+	ostate.c_lflag &= ~(ICANON|ECHO);
+	stty(fileno(stderr), &ostate);
 }
 
 
@@ -139,23 +146,23 @@ doshell(cmd)
 	char	*cmd;
 {
 	char	*getenv();
+	char	*shell;
 	char	cline[128];
 
-	/*
-	outstr("\r\n");
-	flushbuf();
-	*/
+	printf("\n");
 
-	if (cmd == NULL) {
-		if ((cmd = getenv("SHELL")) == NULL)
-			cmd = "/bin/sh";
-		sprintf(cline, "%s -i", cmd);
+	if ((shell = getenv("SHELL")) == NULL) shell = "sh";
+	else if(strrchr(shell,'/')) shell=(char *)(strrchr(shell,'/')+1);
+
+	if (cmd[0] == '\0') {
+		sprintf(cline, "%s -i", shell);
+		cmd = cline;
+	} else {
+		sprintf(cline, "%s -c \"%s\"", shell, cmd);
 		cmd = cline;
 	}
 
-	printf(cmd);
 	reset_tty();
-
 	system(cmd);
 	set_tty();
 	printf("\r");

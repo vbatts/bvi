@@ -9,8 +9,9 @@
  * 1999-07-02 V 1.2.0 beta
  * 1999-08-14 V 1.2.0 final
  * 2000-07-15 V 1.3.0 final
+ * 2001-10-10 V 1.3.1 cast for alloc_buf
  *
- * Copyright 1996-2000 by Gerhard Buergmann 
+ * Copyright 1996-2001 by Gerhard Buergmann 
  * Gerhard.Buergmann@altavista.net
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -258,7 +259,7 @@ do_logic(mode, str)
 			return 1;
 		}
 	}
-	if ((undo_count = alloc_buf(end_addr - start_addr + 1, &undo_buf))) {
+	if ((undo_count = alloc_buf((off_t)(end_addr - start_addr + 1), &undo_buf))) {
 		memcpy(undo_buf, start_addr, undo_count);
 	}
 	undo_start = start_addr;
@@ -326,7 +327,7 @@ getcmdstr(p, x)
 	move(maxy, x);
     do {
         switch (c = vgetc()) {
-		case CTRL('H'):
+		case BVICTRL('H'):
 		case KEY_BACKSPACE:
 		case KEY_LEFT:
             if (p > buff) {

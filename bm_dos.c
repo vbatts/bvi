@@ -2,6 +2,7 @@
  *
  * 2000-05-10 V 1.3.0 alpha
  * 2000-07-07 V 1.3.0 final
+ * 2001-12-07 V 1.3.1
  *
  * NOTE: Edit this file with tabstop=4 !
  *
@@ -114,13 +115,6 @@ cleareol()
 	tputs(erase_ln, 1, putch);
 	*/
 	clreol();
-}
-
-
-void
-beep(void)
-{
-	putchar(7);
 }
 
 

@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C/DTD HTML 3.2 Final//EN">
+<!DOCTYPE html PUBLIC "-//W3C/DTD HTML 3.2 Final//EN">
 <html><head>
 <title>BVI: bmore</title>
 <link rel=stylesheet type="text/css" href="bvi.css">
@@ -7,7 +7,7 @@
 
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
 <tr><td width="1%" valign="top" align="center">
-<img src="gif/dot.gif" width="130" height="1">
+<img src="gif/dot.gif" width="130" height="1" alt="">
 
 <hr noshade width="60%">
 <p>
@@ -37,7 +37,7 @@
 <hr noshade width="60%">
 
 </td>
-<td width="1%"><img src="gif/dot.gif" width="40" height="1"></td>
+<td width="1%"><img src="gif/dot.gif" width="40" height="1" alt=""></td>
 <td width="99%">
 
 <table width="100%" cellspacing="0" cellpadding="0" border="0">
@@ -54,14 +54,14 @@ height="62" border="0"></a>
 </td></tr></table>
 
 <p>
-<STRONG>bmore</STRONG> is a filter that displays the contents of a binary
+<strong>bmore</strong> is a filter that displays the contents of a binary
 file on the terminal, one screenful at a time. It normally pauses after each
-screenful, and prints <B>--More--</B> at the bottom of the screen.
-<STRONG>bmore</STRONG> provides a two-line over­ lap between screens for
+screenful, and prints <b>--More--</b> at the bottom of the screen.
+<strong>bmore</strong> provides a two-line over­ lap between screens for
 continuity. If bmore is reading from a file rather than a pipe,
 the percentage of characters displayed so far is also shown.
-<P>
-<STRONG>bmore</STRONG> scrolls up to display one more screen line in
+<p>
+<strong>bmore</strong> scrolls up to display one more screen line in
 response to a RETURN character; it displays another
 screenful in response to a SPACE character. Other commands are listed below.
 <P>
@@ -74,8 +74,8 @@ screen line. Note that (as one would expect) the first
 byte has the offset 0 (zero).
 <P>
 <center>
-<TABLE WIDTH="10" CELLSPACING="0" CELLPADDING="0" BORDER="0">
-<TR><TD BGCOLOR=#ffccff><PRE CLASS="examp">
+<table width="10" cellspacing="0" cellpadding="0" border="0">
+<tr><td bgcolor="#ffccff"><pre class="examp">
 000000
 00000C
 000018
@@ -90,7 +90,7 @@ byte has the offset 0 (zero).
 000178
 000184
 000190
-00009C</PRE></TD><TD BGCOLOR=#ccffcc><PRE CLASS="examp">
+00009C</pre></td><td bgcolor="#ccffcc"><pre class="examp">
  7F 45 4C 46 01 01
  00 00 00 00 01 00
  00 00 00 00 00 00
@@ -105,7 +105,7 @@ byte has the offset 0 (zero).
  45 08 50 E8 FC FF
  0C 85 D2 75 17 6A
  E9 43 02 00 00 8D
- 0C 85 D2 75 0D C7</PRE></TD><TD BGCOLOR=#ccffcc><PRE CLASS="examp">
+ 0C 85 D2 75 0D C7</pre></td><td bgcolor="#ccffcc"><pre class="examp">
  01 00 00 00 00 00
  03 00 01 00 00 00
  00 00 0C 07 00 00
@@ -120,7 +120,7 @@ byte has the offset 0 (zero).
  FF FF 89 C2 83 C4
  01 E8 60 02 00 00
  74 26 00 8D BC 27
- 45 A0 00 00 00 00</PRE></TD><TD BGCOLOR=#FFCCCC><PRE CLASS="examp">
+ 45 A0 00 00 00 00</pre></td><td bgcolor="#ffcccc"><pre class="examp">
  .ELF........
  ............
  ............
@@ -135,12 +135,12 @@ byte has the offset 0 (zero).
  E.P.........
  ...u.j..`...
  .C....t&...'
- ...u..E.....</PRE></TD></TR>
-<TR BGCOLOR=#FFFFCC><TD COLSPAN=4 CLASS="examp">
+ ...u..E.....</pre></td></tr>
+<tr bgcolor="#ffffcc"><td colspan="4" class="examp">
 <font class="inv">--More--(5%) </font>
-</TD></TR>
-</TABLE>
-</CENTER>
+</td></tr>
+</table>
+</center>
 <p>
 Equal lines will only displayed once, a star (*) is the placeholder 
 for one or more lines equal to the line above.

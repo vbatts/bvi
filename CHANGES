@@ -1,3 +1,19 @@
+New in release 1.3.1
+====================
+
+* autoconf 2.52
+* do_back() fix
+* replace sys_errlist[errno] with strerror(errno) (Debian #106762)
+* deleting bytes in empty file fixed (Debian #121934)
+* no ":set mm" for x at eof (Debian #122240)
+* cast for alloc_buf() in set.c
+* r-bug fix in edit.c and bvi.c
+* renamed CTRL to BVICTRL (AIX problem)
+* bmore: nicer last line
+* bmore: bmbeep() instead of beep()
+* bmore: subshell support fixes
+
+
 New in release 1.3.0
 ====================
 

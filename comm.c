@@ -8,10 +8,11 @@
  * 1999-09-10 V 1.2.0 final
  * 2000-03-03 V 1.3.0 beta
  * 2000-07-15 V 1.3.0 final
+ * 2001-10-10 V 1.3.1  
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2000 by Gerhard Buergmann
+ * Copyright 1996-2001 by Gerhard Buergmann
  * Gerhard.Buergmann@altavista.net
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -220,7 +221,7 @@ docmdline(cmdline)
 		if (repl_count == -1) {
 			emsg("No previous substitute re|No previous substitute regular expression");
 			return;	/* No prev subst */
-			}
+		}
 		repaint();
 		if (!repl_count) {
 			emsg("Fail|Substitute pattern matching failed");
@@ -726,7 +727,12 @@ sysemsg(s)
 {
 	char	string[256];
 
+#ifdef HAVE_STRERROR
+	sprintf(string, "%s: %s", s, strerror(errno));
+#else
 	sprintf(string, "%s: %s", s, sys_errlist[errno]);
+#endif
+
 	emsg(string);
 }
 

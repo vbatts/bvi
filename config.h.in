@@ -15,8 +15,6 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
-#undef NO_SYSERRL
-
 /* Define if you have the memmove function.  */
 #undef HAVE_MEMMOVE
 
@@ -25,6 +23,9 @@
 
 /* Define if you have the strtol function.  */
 #undef HAVE_STRTOL
+
+/* Define if you have the strerror function.  */
+#undef HAVE_STRERROR
 
 /* Define if you have the <curses.h> header file.  */
 #undef HAVE_CURSES_H
@@ -43,3 +44,4 @@
 
 /* Define if your tputs need putc(char) */
 #undef NEED_PUTC_CHAR
+

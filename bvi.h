@@ -7,10 +7,11 @@
  * 1999-08-21  V 1.2.0 final
  * 2000-05-10  V 1.3.0 alpha
  * 2000-10-24  V 1.3.0 final
+ * 2001-10-29  V 1.3.1
  *
  *  NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2000 by Gerhard Buergmann
+ * Copyright 1996-2001 by Gerhard Buergmann
  * Gerhard.Buergmann@altavista.net
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -95,10 +96,7 @@
 #define BS			8
 #define	ESC			27
 #define SEARCH		0
-#define REPLACE		1
-#ifndef CTRL
-#	define CTRL(n)		(n&0x1f)
-#endif
+#define BVICTRL(n)		(n&0x1f)
 
 #define CMDLNG(a,b)     (len <= a && len >= b)
 
@@ -134,12 +132,11 @@
 	extern FILE *debug_fp;
 #endif
 
-extern	char	*version;
-
-#ifdef NO_SYSERRL
-	extern	char	*sys_errlist[];
+#ifndef HAVE_STRERROR
+	extern  char    *sys_errlist[];
 #endif
 
+extern	char	*version;
 extern	char	addr_form[];
 extern	char    pattern[];
 extern	char    rep_buf[];

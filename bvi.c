@@ -7,10 +7,11 @@
  * 1999-10-22  V 1.2.0 final
  * 2000-05-10  V 1.3.0 alpha
  * 2000-10-24  V 1.3.0 final
+ * 2002-01-03  V 1.3.1
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2000 by Gerhard Buergmann
+ * Copyright 1996-2002 by Gerhard Buergmann
  * Gerhard.Buergmann@altavista.net
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -36,7 +37,7 @@
 #endif
 
 
-char	*copyright  = "Copyright (C) 1996-2000 by Gerhard Buergmann";
+char	*copyright  = "Copyright (C) 1996-2002 by Gerhard Buergmann";
 
 jmp_buf	env;        /* context for `longjmp' function   */
 
@@ -329,7 +330,7 @@ main(argc, argv)
 					if (loc == HEX) x = AnzAdd;
 						else	x = AnzAdd + Anzahl3;
 					break;
-		case CTRL('H'):
+		case BVICTRL('H'):
 		case KEY_BACKSPACE:
 		case KEY_LEFT:
 		case 'h':	do {
@@ -344,7 +345,10 @@ main(argc, argv)
 		case ' ':
 		case KEY_RIGHT:
 		case 'l':	do {
+						/*
 						if (x < (Anzahl3 + 6))  x += 3;
+						*/
+						if (x < (Anzahl3 + AnzAdd - 2))  x += 3;
 							else if (x > (Anzahl3 + 3)
 								&& x < (Anzahl3 + AnzAdd - 1 + Anzahl))
 									x++;
@@ -363,8 +367,8 @@ main(argc, argv)
 		case CR:	if (loc == HEX) x = AnzAdd;
 						else		x = AnzAdd + Anzahl3;
 		case 'j':
-		case CTRL('J'):
-		case CTRL('N'):
+		case BVICTRL('J'):
+		case BVICTRL('N'):
 		case KEY_DOWN:
 					do {
 						if ((PTR)((pagepos + (y + 1) * Anzahl)) > maxpos) break;
@@ -386,25 +390,25 @@ main(argc, argv)
 					if (strlen(cmdstr))
 						docmdline(cmdstr);
 					break;
-		case CTRL('B'):
+		case BVICTRL('B'):
 		case KEY_PPAGE: 	/**** Previous Page ****/
 					if (mem <= (PTR)(pagepos - screen))	pagepos -= screen;
 						else	pagepos = mem;
 					repaint();
 					break;
-		case CTRL('D'):
+		case BVICTRL('D'):
 					if (precount > 1) scrolly = precount;
 					scrolldown(scrolly);
 					break;
-		case CTRL('U'):
+		case BVICTRL('U'):
 					if (precount > 1) scrolly = precount;
 					scrollup(scrolly);
 					break;
-		case CTRL('E'):
+		case BVICTRL('E'):
 					if (y > 0) y--;
 					scrolldown(1);
 					break;
-		case CTRL('F'):
+		case BVICTRL('F'):
 		case KEY_NPAGE: 	/**** Next Page *****/
 					if (maxpos >= (PTR)(pagepos + screen))  {
 						pagepos += screen;
@@ -416,14 +420,14 @@ main(argc, argv)
 						repaint();
 					}
 					break;
-		case CTRL('G'):
+		case BVICTRL('G'):
 					fileinfo(name);
 					wrstat = 0;
 					break;
-		case CTRL('L'):   	/*** REDRAW SCREEN ***/
+		case BVICTRL('L'):   	/*** REDRAW SCREEN ***/
 					new_screen();
 					break;
-		case CTRL('Y'):
+		case BVICTRL('Y'):
 					if (y < maxy) y++;
 					scrollup(1);
 					break;
@@ -540,6 +544,7 @@ main(argc, argv)
 					break;
 		case 'r':
 		case 'R':   if (filesize == 0L) break;
+					if (precount < 1) precount = 1;
 					sprintf(rep_buf, "%ld%c", precount, ch);
 					undo_count = edit(ch);
 					lflag++;
@@ -619,7 +624,7 @@ main(argc, argv)
 					if (count > 0)
 						do_delete((off_t)count, current);
 					else if (count < 0)
-						do_back(-count, current);
+						do_back(-(off_t)count, current);
 					if (ch == 'c') {
 						precount = 1;
 						undo_count = edit('i');
@@ -637,7 +642,7 @@ main(argc, argv)
 					break;
 				case 'X':
 					sprintf(rep_buf, "%ldX", precount);
-					do_back(precount, current);
+					do_back((off_t)precount, current);
 					break;
 				default:
 					flushinp();
@@ -645,11 +650,21 @@ main(argc, argv)
 				}
 			} else {
 				switch (ch) {
+				case 'x':
+					if (precount < 1) precount = 1;
+					if ((off_t)precount + current == maxpos) {
+						sprintf(rep_buf, "%ldx", precount);
+						do_delete((off_t)precount, current);
+					} else {
+						movebyte();
+						flushinp();
+						beep();
+					}
+					break;
 				case 'd':
 				case 'i':
 				case 'I':
 				case 'p':
-				case 'x':
 				case 'X':
 					movebyte();
 				default:
