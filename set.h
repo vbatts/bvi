@@ -2,8 +2,8 @@
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2000 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2002 by Gerhard Buergmann
+ * Gerhard.Buergmann@puon.at
  *
  * 1998-03-14 V 1.0.0
  * 1999-01-14 V 1.1.0

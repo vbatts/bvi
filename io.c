@@ -1,4 +1,4 @@
-/* IO.C - file in/out and alloc subroutines for BVI
+/* io.c - file in/out and alloc subroutines for BVI
  *
  * 1996-02-28 V 1.0.0
  * 1999-01-20 V 1.1.0
@@ -7,11 +7,12 @@
  * 1999-10-15 V 1.2.0 final
  * 2000-03-23 V 1.3.0 beta
  * 2000-08-17 V 1.3.0 final
+ * 2004-01-04 V 1.3.2
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2000 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2004 by Gerhard Buergmann
+ * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -275,6 +276,15 @@ bvi_init(dir)
 		return;
 	}
 	
+#ifdef DJGPP
+	strcpy(rcpath, "c:");
+	strcpy(rcpath, dir);
+	poi = strrchr(rcpath, '\\');
+	*poi = '\0';
+	strcat(rcpath, "\\BVI.RC");
+	read_rc(rcpath);
+	read_rc("BVI.RC");
+#else
 	strncpy(rcpath, getenv("HOME"), MAXCMD - 8);
 	rcpath[MAXCMD - 8] = '\0';
 	strcat(rcpath, "/.bvirc");
@@ -286,6 +296,7 @@ bvi_init(dir)
 	if (stat(rcpath, &buf) == 0) {
 		if (buf.st_uid == getuid())	read_rc(rcpath);
 	}
+#endif
 }
 
 
@@ -327,7 +338,11 @@ do_shell()
 {
 	addch('\n');
 	savetty();
+#ifdef DJGPP
+	system("");
+#else
 	system(shell);
+#endif
 	resetty();
 }
 

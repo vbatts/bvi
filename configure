@@ -3171,7 +3171,7 @@ EOF
 
 fi
 
-for ac_header in fcntl.h termcap.h termio.h termios.h unistd.h
+for ac_header in fcntl.h termcap.h termio.h termios.h unistd.h term.h ncurses/term.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 echo "$as_me:3177: checking for $ac_header" >&5

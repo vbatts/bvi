@@ -3,11 +3,12 @@
  * 2000-05-10 V 1.3.0 alpha
  * 2000-07-07 V 1.3.0 final
  * 2001-12-07 V 1.3.1
+ * 2003-07-03 V 1.3.2
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2000 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2003 by Gerhard Buergmann
+ * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -81,21 +82,44 @@ char	*cmd;
 {
 	system(cmd);
 	printf("\r");
-	clrscr();
+	clearscreen();
 	fseek(curr_file, screen_home, SEEK_SET);
 	bytepos = screen_home;
 }
 
 
 void
+highlight()
+{
+	highvideo();
+}
+
+
+void
+normal()
+{
+	normvideo();
+}
+
+
+void
+clearscreen()
+{
+	clrscr();
+}
+
+
+void
 home()
 {
-	/*
-	tputs(Home, 1, putch);
-
-	screenlines = 0;
-	*/
 	gotoxy(1, 1);
+}
+
+
+/* force clear to end of line */
+cleartoeol()
+{
+	clreol();
 }
 
 
@@ -103,18 +127,6 @@ int
 vgetc()
 {
 	 return ((char)bioskey(0));
-}
-
-
-/*
- * force clear to end of line
- */
-cleareol()
-{
-	/*
-	tputs(erase_ln, 1, putch);
-	*/
-	clreol();
 }
 
 

@@ -1,3 +1,20 @@
+New in release 1.3.2
+====================
+
+* configure: checking term.h and ncurses/term.h
+* cast in bmore.c in putline();
+* ported to compile under DJGPP v2.0 w/ PDCURSES (by simoN)
+* fixed multiple file handling for "bmore" (by simoN)
+* renamed several local screen processing routines to avoid compiler conflicts
+* several minor fixes to "bmore" code (by simoN)
+* reset tty after CTRL-C in bmore
+* -c option in bmore (clear before displaying)
+* -n num option in bmore (display the indicated number of lines in each
+  screenful
+* -w num option in bmore (display the indicated number of bytes in each
+  line)
+
+
 New in release 1.3.1
 ====================
 

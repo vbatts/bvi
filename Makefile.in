@@ -6,8 +6,8 @@
 # "autoconf" program (constructs like "@foo@" will get replaced in the
 # actual Makefile.
 #
-# Copyright (c) 1996-2000 by Gerhard Buergmann
-# Gerhard.Buergmann@altavista.net
+# Copyright (c) 1996-2003 by Gerhard Buergmann
+# gerhard@puon.at
 # 
 # 1996-01-18 V 1.0.0
 # 1999-01-15 V 1.1.0
@@ -15,6 +15,7 @@
 # 1999-10-22 V 1.2.0
 # 2000-05-31 V 1.3.0 beta
 # 2000-10-01 V 1.3.0 final
+# 2003-07-03 V 1.3.2
 #
 ###############################################
 
@@ -24,7 +25,7 @@ exec_prefix = @exec_prefix@
 
 bindir = $(DESTDIR)@bindir@
 mandir = $(DESTDIR)@mandir@
-datadir = $(DESTDIR)@datadir@
+libdir = $(DESTDIR)@libdir@
 
 man1dir = $(mandir)/man1
 
@@ -57,7 +58,7 @@ bmore: $(BMOBJ)
 	$(CC) $(CFLAGS) $(DEFS) -c $<
 
 bmore.o: bmore.c
-	$(CC) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(datadir)/bmore.help\" -c $<
+	$(CC) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(libdir)/bmore.help\" -c $<
 
 
 install: all installdirs
@@ -65,14 +66,14 @@ install: all installdirs
 	@$(INSTALL_DATA) bvi.1 bmore.1 $(man1dir)
 	@$(INSTALL_PROGRAM) -s bvi $(bindir)
 	@$(INSTALL_PROGRAM) -s bmore $(bindir)
-	@$(INSTALL_DATA) bmore.help $(datadir)
+	@$(INSTALL_DATA) bmore.help $(libdir)
 	@if [ -f $(bindir)/bview ]; then rm $(bindir)/bview; fi
 	@if [ -f $(bindir)/bvedit ]; then rm $(bindir)/bvedit; fi
 	@ln $(bindir)/bvi $(bindir)/bview
 	@ln $(bindir)/bvi $(bindir)/bvedit
 
 installdirs:
-	$(SHELL) ${srcdir}/mkinstalldirs $(bindir) $(datadir) $(man1dir)
+	$(SHELL) ${srcdir}/mkinstalldirs $(bindir) $(libdir) $(man1dir)
 
 uninstall:
 	@echo "Uninstalling bvi"
@@ -80,12 +81,12 @@ uninstall:
 	@if [ -f $(bindir)/bvedit ]; then rm $(bindir)/bvedit; fi
 	@if [ -f $(bindir)/bvi ]; then rm $(bindir)/bvi; fi
 	@if [ -f $(bindir)/bmore ]; then rm $(bindir)/bmore; fi
-	@if [ -f $(datadir)/bmore.help ]; then rm $(datadir)/bmore.help; fi
+	@if [ -f $(libdir)/bmore.help ]; then rm $(libdir)/bmore.help; fi
 	@if [ -f $(man1dir)/bvi.1 ]; then rm $(man1dir)/bvi.1; fi
 	@if [ -f $(man1dir)/bmore.1 ]; then rm $(man1dir)/bmore.1; fi
 
 clean:
-	rm -f core *.o bvi bmore a.out
+	rm -f core *.o bvi bvi.exe bmore bmore.exe a.out
 
 distclean: clean
 	rm -f Makefile config.cache config.h config.log config.status

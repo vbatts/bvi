@@ -9,13 +9,14 @@ Claudio Nieder <claudio@chili.symmetrix.ch> Makefile
 Nico Schmidt <Nico.Schmidt@ipk.fhg.de> r-bug fix
 Steve Waltner <swaltner@lsil.com> Mac OS X support
 Andre Wobst <Andre.Wobst@Physik.Uni-Augsburg.de> AIX fixes
-SimoN <simontdd@netzero.net> bmore: subshell support fixes
+SimoN <simontdd@netzero.net> bmore: subshell support fixes, DJGPP support
 
 Packages:
 Christian "naddy" Weisgerber <naddy@mips.rhein-neckar.de> Source RPM
 Christian Kurz <shorty@jupiter.rhein-neckar.de> Debian package
 Stijn de Bekker <stijn@debekker.org> Debian package
 Troy Engel <tengel@sonic.net> i386 RPM package
+Thomas Steudten <thomas@steudten.com> RH alpha and x86 RPM package
 
 Doc:
 Sven Guckes <guckes@math.fu-berlin.de>

@@ -59,9 +59,9 @@ for cursor movement.
 <li>Download the source package from the Download Page</li>
 <li>Unzip the package with the command:</li>
 <pre class="examp">
-    # gunzip -c bvi-1.3.1.src.tar.gz | tar xvf
+    # gunzip -c bvi-1.3.2.src.tar.gz | tar xvf
 </pre>
-<li>Change to the directory <tt class="examp">bvi-1.3.1</tt> and type
+<li>Change to the directory <tt class="examp">bvi-1.3.2</tt> and type
 <pre class="examp">
     # ./configure
     # make
@@ -91,12 +91,19 @@ You will find now four new commands:
 files from your file system.<br>
 You can remove the program binaries and object files from the
 source code directory by typing `<tt class="examp">make clean</tt>'.
-To also remove the files that `<TT CLASS="examp">configure</tt>' created
+To also remove the files that `<tt class="examp">configure</tt>' created
 (so you can compile the package for
 a different kind of computer), type `<tt class="examp">make distclean</tt>'. </li>
 </ol>
 						
 <h2>MSDOS</h2>
+Beginning with <b>version 1.3.2</b> you may use the DJGPP environment to
+compile <b>bvi</b> for working under both Win32 and DOS.
+<p>
+The MSDOS version (Borland C) exists for historical reasons and is not
+supported anymore:
+<blockquote>
+<p>
 You have to convert the sourcefiles from the UNIX textformat to
 the MSDOS textformat first. This can be done e.g. by loading and
 saving them with the MSDOS standard editor `edit'.
@@ -112,21 +119,21 @@ be able to convert it to a .COM file.
 <li>Download the source package from the Download Page</li>
 <li>Unzip the package with the command:
 <pre class="examp">
-    gunzip -c bvi-1.3.1.src.tar.gz | tar xvf
+    gunzip -c bvi-1.3.2.src.tar.gz | tar xvf
 </pre></li>
 <li> Load the tcconfig file (located in the <TT>bc</TT> subdirectory
 for Borland - C).</li>
 
 <li> Press F9-Make</li>
 </ol>
-The MSDOS version exists for historical reasons and is not really
-supported anymore.
-<p><font size="-1">
+</blockquote>
+<p><small>
 <a class="btop" href="#top">
 <img border="0" width="16" height="7" src="gif/up.gif"
 alt="Back to the top">Back to the top</a>
-</font>
+</small>
 <hr noshade>
-<i>Last update: February 12<sup>th</sup> 2002 by Gerhard B&uuml;rgmann</i>
+<i>Last update: February 12<sup>th</sup> 2004 by Gerhard B&uuml;rgmann,
+<a class="btop" href="http://www.purkersdorf-online.at/">Purkersdorf</a>/Austria</i>
 </td></tr></table>
 </body></html>

@@ -8,9 +8,10 @@
  * 2000-05-14 V 1.3.0 alpha
  * 2000-07-15 V 1.3.0 final
  * 2001-12-07 V 1.3.1
+ * 2003-07-04 V 1.3.2
  *
- * Copyright 1996-2001 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2003 by Gerhard Buergmann
+ * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -861,7 +862,7 @@ do_ins_chg(start, arg, mode)
 		break;
 	}
 mfree:
-#ifdef __MSDOS__
+#if defined(__MSDOS__) && !defined(DJGPP)
 	farfree(tempbuf);
 #else
 	free(tempbuf);

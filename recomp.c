@@ -6,8 +6,8 @@
  * 2000-04-25 V 1.3.0 beta
  * 2000-07-12 V 1.3.0 final
  *
- * Copyright 1996-2000 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2002 by Gerhard Buergmann
+ * Gerhard.Buergmann@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

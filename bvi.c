@@ -8,11 +8,12 @@
  * 2000-05-10  V 1.3.0 alpha
  * 2000-10-24  V 1.3.0 final
  * 2002-01-03  V 1.3.1
+ * 2004-01-04  V 1.3.2
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2002 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2004 by Gerhard Buergmann
+ * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,7 +38,7 @@
 #endif
 
 
-char	*copyright  = "Copyright (C) 1996-2002 by Gerhard Buergmann";
+char	*copyright  = "Copyright (C) 1996-2004 by Gerhard Buergmann";
 
 jmp_buf	env;        /* context for `longjmp' function   */
 

@@ -8,8 +8,8 @@
  *
  *  NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-1969 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2002 by Gerhard Buergmann
+ * Gerhard.Buergmann@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

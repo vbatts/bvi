@@ -44,7 +44,7 @@ AC_CHECK_TYPE(off_t, int)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h termcap.h termio.h termios.h unistd.h)
+AC_CHECK_HEADERS(fcntl.h termcap.h termio.h termios.h unistd.h term.h ncurses/term.h)
 
 dnl Check if ncurses requested
 _cppflags="${CPPFLAGS}"

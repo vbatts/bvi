@@ -9,11 +9,12 @@
  * 2000-03-03 V 1.3.0 beta
  * 2000-07-15 V 1.3.0 final
  * 2001-10-10 V 1.3.1  
+ * 2003-07-04 V 1.3.2
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2001 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2003 by Gerhard Buergmann
+ * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -39,7 +40,7 @@
 #	include <fcntl.h>
 #endif
 
-#ifdef __MSDOS__
+#if defined(__MSDOS__) && !defined(DJGPP)
 #   include <io.h>
 #	include <dir.h>
 #   define WRITE (O_WRONLY|O_CREAT|O_TRUNC|O_BINARY)

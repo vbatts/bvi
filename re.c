@@ -9,8 +9,8 @@
  * 2000-04-25 V 1.3.0 beta
  * 2000-09-29 V 1.3.0 final
  *
- * Copyright 1996-2000 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2003 by Gerhard Buergmann
+ * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -268,7 +268,8 @@ do_substitution(delim, line, startpos, endpos)
 			} else {
 				if ((n = hexchar()) < 0) {
 					emsg("Badly formed replacement pattern");
-					return 0; }
+					return 0;
+				}
 				repl_pat[pat_len] = n;
 				pat_len++;
 			}
@@ -291,9 +292,9 @@ do_substitution(delim, line, startpos, endpos)
 		if (strchr(cmd, 'c')) conf = 1;
 	}
 	if ((strchr("\\#", ch) && loc == ASCII)
-		|| (strchr("/?", ch) && loc == HEX))
+		|| (strchr("/?", ch) && loc == HEX)) {
 				toggle();
-
+	}
 	startpos--;
 	move(maxy, 0);
 	refresh();
@@ -377,15 +378,16 @@ searching(ch, line, startpos, endpos, flag)
 
 	if (line[0] == '\0' && again == 0) {
 		emsg(noprev);
-		return 0L; }
+		return 0L;
+	}
 
 	ignore_case = (P(P_IC));
 	magic = P(P_MA);
 	start_addr--;
 	if ((strchr("\\#", ch) && loc == ASCII)
-		|| (strchr("/?", ch) && loc == HEX))
+		|| (strchr("/?", ch) && loc == HEX)) {
 				toggle();
-
+	}
 	if (!strchr("Nn", ch)) {
 		m[0] = ch;
 		m[1] = '\0';
@@ -425,7 +427,7 @@ searching(ch, line, startpos, endpos, flag)
 			if (flag & 1) {
 				msg("Search wrapped BOTTOM|Search wrapped around BOTTOM of buffer");
 				found = fsearch(mem, startpos, search_pat);
-				}
+			}
 	} else {
 		found = rsearch(startpos - 1, mem, search_pat);
 		if (flag & S_GLOBAL) return(found);
@@ -433,17 +435,18 @@ searching(ch, line, startpos, endpos, flag)
 			if (flag & 1) {
 				msg("Search wrapped TOP|Search wrapped around TOP of buffer");
 				found = rsearch(endpos, startpos, search_pat);
-				}
+			}
 	}
 	if (!found) {
 		if (flag & 1) {
 			emsg(notfound);
 		} else {
-			if (P(P_TE))
+			if (P(P_TE)) {
 			  sprintf(string, "No match to %s", sdir == FORWARD ? "BOTTOM" : "TOP");
-			else
+			} else {
 			  sprintf(string, "Address search hit %s without matching pattern",
 					sdir == FORWARD ? "BOTTOM" : "TOP");
+			}
 			emsg(string);
 		}
 	} else {

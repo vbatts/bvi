@@ -8,11 +8,12 @@
  * 2000-05-31  V 1.3.0 beta
  * 2000-10-04  V 1.3.0 final
  * 2002-01-16  V 1.3.1  
+ * 2003-02-20  V 1.3.2
  *
  *  NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2002 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2003 by Gerhard Buergmann
+ * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,7 +37,7 @@
 #include <sys/stat.h>
 #include <setjmp.h>
 
-#ifdef __MSDOS__
+#if defined(__MSDOS__) && !defined(DJGPP)
 #	include "patchlev.h"
 #	include "dosconf.h"
 #   include <alloc.h>
@@ -46,14 +47,20 @@
 #	include "patchlevel.h"
 #	include "config.h"
 #	include <unistd.h>
-#if HAVE_NCURSES_H
+# if HAVE_NCURSES_H
 #   include <ncurses.h>
-#	include <ncurses/term.h>
-#else
+# else
 #   include <curses.h>
+# endif 
+# if HAVE_TERM_H
 #	include <term.h>
-#endif 
+# else
+#  if HAVE_NCURSES_TERM_H
+#	include <ncurses/term.h>
+#  endif
+# endif
 #endif
+
 
 /* defines for filemode */
 #define	ERROR				-1
@@ -89,7 +96,7 @@
 #	define FALSE	0
 #endif
 
-#ifdef __MSDOS__
+#if defined(__MSDOS__) && !defined(DJGPP)
 #	define ANSI
 #	define PTR		char huge *
 #	define off_t	long
@@ -123,13 +130,13 @@ extern	int		no_tty, no_intty;
 
 #ifdef ANSI
 	void	initterm(void), set_tty(void), reset_tty(void);
-	void	clreol(void), clrscr(void), highvideo(void), normvideo(void);
-	void	bmbeep(void), home(void), sig(void);
+	void	cleartoeol(void), clearscreen(void), highlight(void);
+	void	normal(void), bmbeep(void), home(void), sig(void);
 	void	doshell(char *), emsg(char *);
 	void	do_next(int);
-	void	open_file(char *);
 	void	bmsearch(int);
 	void	pushback(int, char *);
+	int		open_file(void);
 	int		printout(int), rdline(int, char *);
 	int		nextchar(void), vgetc(void);
 	int     sbracket(int, char *, int);
@@ -138,13 +145,13 @@ extern	int		no_tty, no_intty;
 	void    putline(char *, int);
 #else
 	void	initterm(), set_tty(), reset_tty();
-	void	clreol(), clrscr(), highvideo(), normvideo();
-	void	bmbeep(), home(), sig();
+	void	cleartoeol(), clearscreen(), highlight();
+	void	normal(), bmbeep(), home(), sig();
 	void	doshell(), emsg();
 	void	do_next();
-	void	open_file();
 	void	bmsearch();
 	void	pushback();
+	int		open_file();
 	int		printout(), rdline();
 	int		nextchar(), vgetc();
 	int     sbracket();

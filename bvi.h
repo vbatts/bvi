@@ -8,11 +8,12 @@
  * 2000-05-10  V 1.3.0 alpha
  * 2000-10-24  V 1.3.0 final
  * 2001-10-29  V 1.3.1
+ * 2003-07-04  V 1.3.2
  *
  *  NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2001 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2003 by Gerhard Buergmann
+ * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,7 +37,7 @@
 #include <sys/stat.h>
 #include <setjmp.h>
 
-#ifdef __MSDOS__
+#if defined(__MSDOS__) && !defined(DJGPP)
 #	include "patchlev.h"
 #	include "dosconf.h"
 #   include "doscur.h"
@@ -109,7 +110,7 @@
 #	define FALSE	0
 #endif
 
-#ifdef __MSDOS__
+#if defined(__MSDOS__) && !defined(DJGPP)
 #	define ANSI
 #	define PTR		char huge *
 #	define off_t	long
@@ -185,7 +186,7 @@ extern  off_t   block_begin, block_end, block_size;
 #define	S_ISFIFO(m)	((m & 0170000) == 0010000)	/* fifo */
 #endif
 
-#ifdef __MSDOS__
+#if defined(__MSDOS__) && !defined(DJGPP)
 	void	d_memcpy(PTR, PTR, off_t);
 	void	d_memmove(PTR, PTR, off_t);
 #endif

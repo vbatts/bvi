@@ -9,10 +9,11 @@
  * 1999-07-02 V 1.2.0 beta
  * 1999-08-14 V 1.2.0 final
  * 2000-07-15 V 1.3.0 final
- * 2001-10-10 V 1.3.1 cast for alloc_buf
+ * 2001-10-10 V 1.3.1 
+ * 2003-07-03 V 1.3.2
  *
- * Copyright 1996-2001 by Gerhard Buergmann 
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2003 by Gerhard Buergmann 
+ * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -52,7 +53,7 @@ struct	param	params[] = {
 	{ "window",		"window",	25,		"",	P_NUM },
 	{ "wordlength",	"wl",		4,		"",	P_NUM },
 	{ "wrapscan",	"ws",		TRUE,	"",	P_BOOL },
-#ifdef __MSDOS__
+#if defined(__MSDOS__) && !defined(DJGPP)
 	{ "color",		"co",		7,		"",	P_NUM  },
 #endif
 	{ "",			"",			0,		"",	0, }		/* end marker */
@@ -122,7 +123,7 @@ doset(arg)
 					params[i].nvalue = strtol(s, &s, 10);
 				}
 				params[i].flags |= P_CHANGED;
-#ifdef __MSDOS__
+#if defined(__MSDOS__) && !defined(DJGPP)
 				if (i == P_CO) {
 					textcolor(P(P_CO) & 0x07);
 					textbackground((P(P_CO) & 0xf0) >> 4);

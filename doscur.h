@@ -1,7 +1,7 @@
 /* DOSCUR.H - CURSES.H for TURBO C
  *
- * Copyright 1996 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2002 by Gerhard Buergmann
+ * Gerhard.Buergmann@puon.at
  *
  * 1996-02-28 V 1.0.0
  * 1998-04-12 V 1.0.1
@@ -146,4 +146,3 @@ void	attrset(int);
 
 #define ERR     (-1)
 
-

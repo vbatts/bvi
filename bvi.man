@@ -2,28 +2,48 @@ BVI(1)                    User Commands                    BVI(1)
 
 
 NAME
-       bvi, bview - visual display editor for binary files
+       bvi, bview - visual editor for binary files
 
 VERSION
-       bvi-1.3.1
+       bvi-1.3.2
 
 SYNOPSIS
-       bvi   [-R] [-c cmd] [-f script] file...
-       bview [-R] [-c cmd] [-f script] file...
+       bvi   [-R] [-c cmd] [-f script] [-b begin] [-e end] [-s size] file...
+       bview [-R] [-c cmd] [-f script] [-b begin] [-e end] [-s size] file...
 
 OPTIONS
        file...
-           One or more files.  The file argument indicates one or
-           more files to be edited.
+           A  list  of  filenames.  The first one will be the
+           current file and will be read into  the  buffer.  The
+           cursor  will  be  positioned on the first line of the
+           buffer.  You can get to the other files with the
+           ":next" command.
 
        -R  "Readonly": The readonly flag is set for all the
            files, preventing accidental overwriting with a write
            command.
 
+
+       -b begin
+           causes bvi to load a file not from the start but from
+           offset begin.
+
+
+       -e end
+           causes bvi to load a file not till end but till
+           address end.
+
+
+       -s size
+           causes bvi not to load the complete file but only size
+           bytes.
+
+
        -c cmd
-           Execute command cmd.  Begin editing by executing the
-           specified editor command (usually a search or
-           positioning command).
+           cmd will be  executed  after  the  first file  has
+           been read. If the  cmd  contains spaces  it  must  be
+           enclosed in double quotes (this depends on  the  shell
+           that  is  used).
 
        -f script
            This command provides a means for collecting a series
@@ -33,39 +53,38 @@ OPTIONS
            to make several global changes in a binary file.
 
 DESCRIPTION
-       Bvi stands for "Binary VIsual editor".  Bvi is a display
+       Bvi stands for "Binary VIsual editor".  Bvi is a screen
        oriented editor for binary files; its command set is based
-       on those of the vi(1) texteditor.  As a binary editor
-       cannot have the concept of "lines" there are several
-       differences to Vi commands (see COMPARISON).
+       on that of the vi(1) text editor.  As a binary editor does
+       not have the concept of "lines" there are differences from
+       Vi commands wherever the latter are line orientate.
 
 COMPARISON
        The main differences between Vi and Bvi are:
 
-       The screen is divided in three sections/windows: The byte
-       offset (at the left side), the hex window (in the middle),
-       and the ascii window (to the right) which shows the ascii
-       values of those bytes in the hex window.  On an 80 column
-       terminal you will therefore see sixteen hex values and
-       their ASCII values on each screen line.  Note that the
-       first byte has the offset '0' (zero).
+       The screen is divided in three sections or panes: The byte
+       offset (extreme left), the hex pane (middle), and an ascii
+       pane (right) which shows as printable characters those
+       bytes in the hex pane.  On an 80 column terminal there
+       will be sixteen hex values and their ASCII values on each
+       screen line.  Note that (as one would expect) the first
+       byte has the offset '0' (zero).
 
        You can toggle between the hex and ascii windows with the
-       tabulator key (TAB).  Toggling between these two windows
-       does not change the current position within the file.
+       tab key (TAB).  Toggling between these two windows does
+       not change the current position (offset) within the file.
 
-       No "lines" concept: Files are treated as one long series
-       of bytes only.  These characters "newline" and "carriage
-       return" thus are not special, ie they do not mark the end
-       of lines.  Therefore the lines on the screen do not
-       represent lines in the usual way.  Data is broken across
-       screen lines as they happen to fit in.  As a consequence
-       there are no commands in bvi from ex or vi that are based
-       on line numbers, eg "dd", "yy", 'C', 'S', 'o', 'O'.  This
-       also changes the meaning of "range" before the ":write"
-       command to a byte offset, ie the command ":100,200w foo"
-       writes all *bytes* (not lines) from offset 100 to offset
-       200 to the file "foo".
+       No "lines" concept: Files are treated as one long stream
+       of bytes.  The characters "newline" and "carriage return"
+       are not special, id est they never mark the end of lines.
+       Therefore the lines on the screen do not represent lines
+       in the usual way.  Data is broken across screen lines
+       arbitarily.  As a consequence there are no commands in bvi
+       from ex or vi that are based on line numbers, eg "dd",
+       "yy", 'C', 'S', 'o', 'O'.  This also changes the meaning
+       of "range" before the ":write" command to a byte offset,
+       ie the command ":100,200w foo" writes all *bytes* (not
+       lines) from offset 100 to offset 200 to the file "foo".
 
        No "text objects": There are also no text-specific
        arrangements like words, paragraphs, sentences, sections
@@ -102,38 +121,41 @@ COMPARISON
        between hex value are optional, so searching for
        "6775636B6573" will find "guckes".
 
-       Changing data (insertion, deletion) moves the data to
-       other addresses; this is bad for many cases (eg.
-       databases, program files) and is thus disabled by default.
-       You can enable this commands by typing
+       Changing the length of data (insertion, deletion) moves
+       the data to other addresses; this is bad for many cases
+       (eg. databases, program files) and is thus disabled by
+       default. You can enable this commands by typing
 
             :set memmove
 
-   BVI Modes:
+       BVI Modes:
 
-   Command Mode aka Normal Mode:
+       Command Mode (Normal Mode):
 
-       Input is treated as commands.  Note that command mode is
-       the default mode after startup and when you escape/quit
-       from either command line mode or input mode.  Use ESC
-       (escape) to cancel a partial (uncompleted) command.
+       Input is treated as command.  Note that command mode is
+       the default mode after startup and after escaping from
+       input mode.  Use ESC (escape) to cancel a partial
+       (uncompleted) command.
 
-   Input Mode:
+       Input Mode:
 
-       Input is treated as replacement of current character or is
-       appended to the current file.  This mode is entered from
-       command mode by typing either of 'i', 'I', 'A', 'r', or
-       'R'.  You can enter the character itself (in the ASCII
-       window) or its hexadecimal value (in the HEX window).
-       Type TAB to switch between these two windows.  Type ESC to
-       cancel current command and return to command mode.  Type
-       CTRL-C to cancel current command abnormally.
+       Input is treated as replacement of current characters or
+       (after the end of the file) is appended to the current
+       file.  This mode is entered from command mode by typing
+       one of 'i', 'I', 'A', 'r', or 'R'.  You can enter the
+       characters from the keyboard (in the ASCII window) or
+       hexadecimal values (in the HEX window).  Type TAB to
+       switch between these two windows.  Type ESC to finish the
+       current input and return to command mode.  Type CTRL-C to
+       cancel current command abnormally.
 
-   Command line mode (aka Last Line Mode):
+       Command line mode (Last Line Mode or : mode):
 
-       Reading input for : / ? \ # or !; terminate by typing a
-       carriage return; an interrupt cancels termination.  Type
-       ESC to cancel current command and return to command mode.
+       Similar to vi, this mode is entered by typing one of the
+       characters : / ? \ # !  The command is terminated and
+       executed by typing a carriage return; to cancel a
+       partially typed command, type ESC to cancel the current
+       command and return to command mode.
 
 ENVIRONMENT
        The editor recognizes the environment variable BVIINIT as
@@ -166,11 +188,11 @@ COMMAND SUMMARY
        abbreviations used within the following description of
        commands.
 
-   Abstract:
-       Arrow keys move the cursor on the screen within the
+       Abstract:
+         Arrow keys move the cursor on the screen within the
        current window.
 
-   Sample commands:
+       Sample commands:
          :version    show version info
          <- v ^ ->   arrow keys move the cursor
          h j k l     same as arrow keys
@@ -180,7 +202,7 @@ COMMAND SUMMARY
          /text       search for text
          ^U ^D       scroll up or down
 
-   Counts before bvi commands:
+       Counts before bvi commands:
          Numbers may be typed as a prefix to some commands.
          They are interpreted in one of these ways.
 
@@ -189,11 +211,11 @@ COMMAND SUMMARY
          scroll amount       ^D  ^U
          repeat effect       most of the rest
 
-   Interrupting, canceling
+       Interrupting, canceling
          ESC         end insert or incomplete command
          DEL         (delete or rubout) interrupts
 
-   File manipulation:
+       File manipulation:
          ZZ          if file modified, write and exit;
                      otherwise, exit
          :w          write changed buffer to file
@@ -202,7 +224,7 @@ COMMAND SUMMARY
          :q          quit when no changes have been made
          :q!         quit and discard all changes
          :e file     edit file
-         :e!         reedit current file, discard all changes
+         :e!         re-read current file, discard all changes
          :e #        edit the alternate file
          :e! #       edit the alternate file, discard changes
          :w  file    write current buffer to file
@@ -218,13 +240,13 @@ COMMAND SUMMARY
                      current position within buffer
          ^G          same as :f
 
-   Additional edit commands
-       You can insert/append/change bytes in
+       Additional edit commands
+         You can insert/append/change bytes in
        ASCII/binary/decimal/ hexadecimal or octal representation.
        You can enter several (screen) lines of input. A line with
        only a period (.) in it will terminate the command. You
        must not type in values greater than a byte value. This
-       causes an abandom of the command.  Pressing the CR key
+       causes an abandonment of the command.  Pressing the CR key
        does not insert a newline - character into the file. If
        you use ASCII mode you can use the special characters \n,
        \r, \t and \0.
@@ -233,7 +255,7 @@ COMMAND SUMMARY
          :a bCR      append bytes (Binary) at end of file
          :c hCR      change bytes (hexadecimal) at cursor position
 
-   Bit-level operations
+       Bit-level operations
          :and n      bitwise 'and' operation with value n
          :or  n      bitwise 'or' operation with value n
          :xor n      bitwise 'xor' operation with value n
@@ -244,7 +266,7 @@ COMMAND SUMMARY
          :rl i       rotate each byte i bits to the left
          :rr i       rotate each byte i bits to the right
 
-   Command mode addresses
+       Command mode addresses
          :w foo         write current buffer to a file
                         named "foo"
          :5,10w foo     copy byte 5 through 100 into as
@@ -256,7 +278,7 @@ COMMAND SUMMARY
          :/pat/,$ foo   search pattern pat and and copy
                         through end of file
 
-   Positioning within file:
+       Positioning within file:
          ^B      backward screen
          ^F      forward  screen
          ^D      scroll down half screen
@@ -271,7 +293,7 @@ COMMAND SUMMARY
          N       repeat last search command, but in opposite
                  direction
 
-   Adjusting the screen:
+       Adjusting the screen:
          ^L      clear and redraw screen
          zCR     redraw screen with current line at top of screen
          z-      redraw screen with current line at bottom of
@@ -283,16 +305,15 @@ COMMAND SUMMARY
          ^E      scroll screen down 1 line
          ^Y      scroll screen up   1 line
 
-   Marking and returning:
+       Marking and returning:
          mx      mark current position with lower-case letter x
                  Note: this command works for all lower-case
-                 letters
+       letters
          'x      move cursor to mark x in ASCII section
          `x      move cursor to mark x in HEX section
          ''      move cursor to previous context in ASCII section
          ``      move cursor to previous context in HEX section
-
-   Line positioning:
+       Line positioning:
          H           jump to first      line on screen ("top")
          L           jump to last       line on screen ("low")
          M           jump to middle     line on screen ("middle")
@@ -302,7 +323,7 @@ COMMAND SUMMARY
          DOWN or j   next     line, same column
          UP   or k   previous line, same column
 
-   Character positioning:
+       Character positioning:
          ^           first byte in HEX window
          $           end of screen line
          l or RIGHT  jump onto next byte (within current
@@ -316,7 +337,7 @@ COMMAND SUMMARY
          n|          jump onto nth byte/character within current
                      line
 
-   Strings:
+       Strings:
          (works similar to the strings(1) command)
          Note:  "Words" are defined as strings of "nonprinting
          characters".
@@ -327,35 +348,34 @@ COMMAND SUMMARY
                  \0 or \n
          B       back to previous string delimited with a
                  nonprinting char
-
-   Corrections during insert:
+       Corrections during insert:
          ^H      erase last character (backspace)
          erase   your erase character, same as ^H (backspace)
          ESC     ends insertion, back to command mode
 
-   Append and replace:
+       Append and replace:
          A       append at end of file
          rx      replace current bte with char 'x'
          R       enter replace mode; for all subsequent input,
                  the current byte is overwritten with the next
                    input character; leave replace mode with ESC.
 
-   Miscellaneous Operations:
+       Miscellaneous Operations:
          TAB     toggle between ASCII and HEX section
 
-   Yank and Put:
+       Yank and Put:
          3ySPACE yank 3 characters
          p       insert contents of yank buffer
          o       replace text with content of yank buffer
          P       put back at end of file
 
-   Undo, Redo:
+       Undo, Redo:
          u       undo last change
                  Note:  Only the last change can be undone.
                  Therefore this commands toggles between the
                  last and second-t-last state of the buffer.
 
-   Setting Options:
+       Setting Options:
          With the :set command you can set options in bvi
 
          Option     Default  Description
@@ -380,13 +400,14 @@ COMMAND SUMMARY
                              32 is displayed in the statusline as shown
                              in ascii(7) if unset rather in DOS-style (^A)
 
+
 AUTHOR
        bvi was developed by Gerhard Buergmann, Vienna, Austria
-       Gerhard.Buergmann@altavista.net
+       Gerhard.Buergmann@puon.at
 
 WWW
        Bvi Homepage:  http://bvi.sourceforge.net/
-       Vi Pages:      http://www.math.fu-berlin.de/~guckes/vi/
+       Vi Pages:      http://www.guckes.net/vi/clones.php3
                       (all about Vi and its clones)
 
 FILES
@@ -400,5 +421,4 @@ BUGS
 SEE ALSO
        vi(1), strings(1), ascii(5)
 
-
-3/Jan/2002             BVI Version 1.3.1                       8
+3/Jan/2004              BVI Version 1.3.2

@@ -5,11 +5,11 @@
  * 2000-05-31  V 1.3.0 beta
  * 2000-10-18  V 1.3.0 final
  * 2002-01-16  V 1.3.1
- * 2004-01-09  V 1.3.2
+ * 2002-02-22  V 1.3.2 line 576
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1990-2004 by Gerhard Buergmann
+ * Copyright 1990-2003 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -32,25 +32,20 @@
 #	include <locale.h>
 #endif
 
-#if defined(__MSDOS__) && !defined(DJGPP)
+#ifdef	__MSDOS__
 #	define PRINTF	cprintf
 #else
 #	define PRINTF	printf
 #ifndef HELPFILE
-#  ifdef DJGPP
-#	define HELPFILE "/dev/env/DJDIR/lib/bmore.help"
-#  else
-#	define HELPFILE "/usr/local/lib/bmore.help"
-#  endif
+#	define HELPFILE "/usr/local/share/bmore.help"
 #endif
 #endif
 
 #include "bmore.h"
 
-char	*copyright  = "Copyright (C) 1990-2004 by Gerhard Buergmann";
+char	*copyright  = "Copyright (C) 1990-2003 by Gerhard Buergmann";
 
 int		maxx, maxy;
-int		mymaxx = 0, mymaxy = 0;
 char	*name = NULL;
 char	sstring[MAXCMD] = "";	/* string for search */
 char	estring[MAXCMD] = "";	/* string for shell escape */
@@ -68,12 +63,11 @@ char	numarr[64];		/* string for collecting number */
 char	addr_form[15];
 
 int		ascii_flag = 0;
-int		c_flag = 0, d_flag = 0;
-int		exval = 0;
+int		d_flag = 0;
 int		init_search = 0;
 char	buffer1[MAXCMD], buffer2[MAXCMD];
 int		out_len;
-int		corr = 0, do_header = 0, to_print;
+int		corr = 0, to_print;
 off_t	init_byte = 0;
 off_t	last_search = 0;
 off_t	screen_home, filesize;
@@ -81,7 +75,7 @@ off_t	bytepos, oldpos;
 int		prompt = 1;
 char	helppath[MAXCMD];
 
-static	char	progname[10];
+static	char	*progname;
 static	char	cmdbuf[MAXCMD];
 static	int		cnt = 0;
 static	int		icnt = 0;
@@ -93,15 +87,12 @@ char	*emptyclass = "Empty byte class '[]' or '[^]'";
 
 /* -a   ASCII mode
  * -d   beginners mode
- * -c	clear before displaying
  * -i   ignore case
- * -n	number of lines/screen
- * -w   width of screen
  */
 void
 usage()
 {
-	fprintf(stderr, "Usage: %s [-acdi] [-lines] [+linenum | +/pattern] name1 name2 ...\n", progname);
+	fprintf(stderr, "Usage: %s [-adi] [+linenum | +/pattern] name1 name2 ...\n", progname);
 	exit(1);
 }
 
@@ -118,14 +109,15 @@ main(argc, argv)
 	long	count;
 	int		i, n = 1;
 	int		d_line, r_line, z_line;
+
+
+#ifdef __MSDOS__
 	char	*poi;
 
-
-#if defined(__MSDOS__) && !defined(DJGPP)
 	strcpy(helppath, argv[0]);
 	poi = strrchr(helppath, '\\');
 	*poi = '\0';
-	strcat(helppath, "\\BMORE.HLP");
+	strcat(helppath, "\\MORE.HLP");
 #else
 	strncpy(helppath, HELPFILE, MAXCMD - 1);
 #endif
@@ -134,46 +126,23 @@ main(argc, argv)
 	setlocale(LC_ALL, "");
 #endif
 
-	poi = strrchr(argv[0], DELIM);
- 
-	if (poi) strncpy(progname, ++poi, 9);
-	else strncpy(progname, argv[0], 9);
-	strtok(progname, ".");
+	progname = argv[0];
 
 	while (n < argc) {
 		switch (argv[n][0]) {
 		case '-':
-			if (argv[n][1] >= '0' && argv[n][1] <= '9') {
-				sscanf(&argv[n][1], "%dx%d", &mymaxy, &mymaxx);
-			} else if (argv[n][1] == 'n') {
-				if (argv[n+1] == NULL || argv[n+1][0] == '-') {
-					usage();
-				} else {
-					sscanf(&argv[++n][0], "%d", &mymaxy);
+			i = 1;
+			while (argv[n][i] != '\0') {
+				switch (argv[n][i]) {
+				case 'a':	ascii_flag++;
+							break;
+				case 'd':	d_flag++;
+							break;
+				case 'i':	ignore_case++;
+							break;
+				default:	usage();
 				}
-			} else if (argv[n][1] == 'w') {
-				if (argv[n+1] == NULL || argv[n+1][0] == '-') {
-					usage();
-				} else {
-					sscanf(&argv[++n][0], "%d", &mymaxx);
-				}
-			} else {
-				i = 1;
-				while (argv[n][i] != '\0') {
-					switch (argv[n][i]) {
-					case 'a':	ascii_flag++;
-								break;
-					case 'c':	c_flag++;
-								break;
-					case 'd':	d_flag++;
-								break;
-					case 'i':	ignore_case++;
-								break;
-					default:		
-								usage();
-					}
-					i++;
-				}
+				i++;
 			}
 			n++;
 			break;
@@ -198,34 +167,23 @@ main(argc, argv)
 			break;
 		}
 	}
+	if (numfiles == 0) {
+		curr_file = stdin;
+		if (isatty(fileno(stdin)) != 0) usage();
+	} else {
+		open_file(name);
+		file_nr = 1;
+		fseek(curr_file, init_byte, SEEK_SET);
+		bytepos += init_byte;
+	}
+	screen_home = bytepos;
+
 	initterm();
 	set_tty();
 	maxy -= 2;
-	if (mymaxy) {
-		maxy = mymaxy;
-	}
 	z_line = maxy;
 	d_line = maxy / 2;
 	r_line = 1;
-
-	if (numfiles == 0) {
-		curr_file = stdin;
-		if (isatty(fileno(stdin)) != 0) {
-			reset_tty();
-			usage();
-		}
-	} else {
-		file_nr = 1;
-		while (open_file(name)) {
-			do_next(1);
-		}
-		if (exval) {
-		} else {
-			fseek(curr_file, init_byte, SEEK_SET);
-			bytepos += init_byte;
-		}
-	}
-	screen_home = bytepos;
 
 	AnzAdd = 10;
 	strcpy(addr_form,  "%08lX  ");
@@ -234,42 +192,24 @@ main(argc, argv)
 		out_len = ((maxx - AnzAdd - 1) / 4) * 4;
 	else
 		out_len = ((maxx - AnzAdd - 1) / 16) * 4;
-	if (mymaxx) {
-		out_len = mymaxx;
-	}
 
 	if (init_search)
 		bmsearch(init_search);
 
 	if (no_tty) {
-		int	fileloop;
-
-		for (fileloop = 0; fileloop < numfiles; fileloop++) {
-			while(!printout(1));
-			do_next(1);
-			open_file(name);
-		}
+		while(!printout(1));
 		fclose(curr_file);
 		reset_tty();
-		exit(exval);
+		exit(0);
 	}
-	if (!exval) {
-		if (printout(maxy)) {
-			do_next(1);
-		}
+	if (printout(maxy)) {
+		do_next(1);
 	}
-	signal(SIGINT, sig);
-	signal(SIGQUIT, sig);
 	/* main loop */
 	do {
 		to_print = 0;
 		if (prompt) {
-			if (prompt == 2) {
-				while (open_file(name)) {
-					do_next(1);
-				}
-			}
-			highlight();
+			highvideo();
 			PRINTF("--More--");
 			if (prompt == 2) {
 				PRINTF("(Next file: %s)", name);
@@ -278,15 +218,13 @@ main(argc, argv)
 			}
 
 			if (d_flag) PRINTF("[Press space to continue, 'q' to quit]");
-			normal();
+			normvideo();
 			fflush(stdout);
 		}
 		ch = vgetc();
-		/*
 		if (prompt == 2) {
 			open_file(name);
 		}
-		*/
 		prompt = 1;
 		PRINTF("\r");
 		while (ch >= '0' && ch <= '9') {
@@ -325,10 +263,10 @@ main(argc, argv)
 					break;
 		case 'q':
 		case 'Q':
-					cleartoeol();
+					clreol();
 					fclose(curr_file);
 					reset_tty();
-					exit(exval);
+					exit(0);
 		case ':' :	
 					switch (colon) {
 					case 'f':
@@ -345,7 +283,7 @@ main(argc, argv)
 						if (precount < 1) precount = 1;
 						do_next(precount);
 						PRINTF("\r");
-						cleartoeol();
+						clreol();
 						PRINTF("\n...Skipping to file %s\r\n\r\n", name);
 						prompt = 2;
 						break;
@@ -353,19 +291,19 @@ main(argc, argv)
 						if (precount < 1) precount = 1;
 						do_next(-precount);
 						PRINTF("\r");
-						cleartoeol();
+						clreol();
 						PRINTF("\n...Skipping back to file %s\r\n\r\n", name);
 						prompt = 2;
 						break;
 					case 'q':
-						cleartoeol();
+						clreol();
 						fclose(curr_file);
 						reset_tty();
-						exit(exval);
+						exit(0);
 						break;
 					case '!':
 						if (!no_intty) {
-							cleartoeol();
+							clreol();
 							if (rdline(colon, estring)) break;
 							doshell(estring);
 							PRINTF("------------------------\r\n");
@@ -377,7 +315,7 @@ main(argc, argv)
 					break;
 		case '!':
 			if (!no_intty) {
-				cleartoeol();
+				clreol();
 				if (rdline(ch, estring)) break;
 				doshell(estring);
 				PRINTF("------------------------\r\n");
@@ -392,7 +330,7 @@ main(argc, argv)
 					if (no_intty) {
 						bmbeep();
 					} else {
-						clearscreen();
+						clrscr();
 						to_print = maxy + 1;
 						fseek(curr_file, screen_home, SEEK_SET);
 						bytepos = screen_home;
@@ -426,7 +364,7 @@ main(argc, argv)
 						count = precount;
 					}
 					putchar('\r');
-					cleartoeol();
+					clreol();
 					PRINTF("\n...skipping %ld line", count);
 					if (count > 1) {
 						PRINTF("s\r\n\r\n");
@@ -445,7 +383,7 @@ main(argc, argv)
 					}
 		case '/':	/**** Search String ****/
 					if (!repeat) {
-						cleartoeol();
+						clreol();
 						if (rdline(ch, sstring)) break;
 					}
 		case 'n': 		/**** Search Next ****/
@@ -464,13 +402,13 @@ main(argc, argv)
 						screen_home = bytepos;
 						to_print = maxy;
 						PRINTF("\r");
-						cleartoeol();
+						clreol();
 						PRINTF("\n\r\n***Back***\r\n\r\n");
 					}
 					break;
 		case '=':
 					prompt = 0;
-					cleartoeol();
+					clreol();
 					PRINTF("%lX hex  %lu dec", (unsigned long)bytepos,
 						(unsigned long)bytepos);
 					fflush(stdout);
@@ -489,7 +427,7 @@ main(argc, argv)
 		case 'w':
 		case 'v':
 					if (!no_intty) {
-						cleartoeol();
+						clreol();
 						if (ch == 'v') {
 							sprintf(string, "bvi +%lu %s", 
 								(unsigned long)(screen_home + 
@@ -545,7 +483,7 @@ rdline(ch, sstring)
 			if (i) {
 				sstring[--i] = '\0';
 				PRINTF("\r%c%s", ch, sstring);
-				cleartoeol();
+				clreol();
 			} else {
 				ch1 = ESC;
 				break;
@@ -567,7 +505,7 @@ rdline(ch, sstring)
 	}
 	if (ch1 == ESC) {
 		putchar('\r');
-		cleartoeol();
+		clreol();
 		return 1;
 	}
 	if (i) sstring[i] = '\0';
@@ -583,7 +521,7 @@ do_next(n)
 		if (n == 1 && file_nr == numfiles) {
 			fclose(curr_file);
 			reset_tty();
-			exit(exval);
+			exit(0);
 		}
 		if ((file_nr + n) > numfiles)
 			file_nr = numfiles;
@@ -597,12 +535,12 @@ do_next(n)
 	} else {
 		fclose(curr_file);
 		reset_tty();
-		exit(exval);
+		exit(0);
 	}
 }
 
 
-int
+void
 open_file(name)
 	char *name;
 {
@@ -611,15 +549,19 @@ open_file(name)
 	if (stat(name, &buf) > -1) {
 		filesize = buf.st_size;
 	}
+	if (numfiles > 1) {
+		PRINTF("\r");
+		clreol();
+		PRINTF("\n::::::::::::::\r\n%s\r\n::::::::::::::\r\n", name);
+		corr = 2;
+	}
 	if (curr_file != NULL) fclose(curr_file);
-	if (numfiles > 1) do_header = 1;
 	if ((curr_file = fopen(name, "rb")) == NULL) {
+		/* reset_tty(); */
 		perror(name);
-		exval = 1;
-		return 1;
+		exit(1);
 	}
 	bytepos = screen_home = 0;
-	return 0;
 }
 
 
@@ -651,8 +593,7 @@ putline(buf, num)
 		*(string + print_pos) = ' ';
 	}
 	*(string + num) = '\0';
-	if (no_tty) PRINTF("%s\n", string);
-	else PRINTF("%s\r\n", string);
+	PRINTF("%s\r\n", string);
 }
 
 
@@ -664,20 +605,6 @@ printout(lns)
 	int			doub = 0;
 	static		int		flag;
 	
-	if (c_flag) {
-		clearscreen();
-	}
-	if (do_header) {
-		if (no_tty) {
-			PRINTF("::::::::::::::\n%s\n::::::::::::::\n", name);
-		} else {
-			PRINTF("\r");
-			cleartoeol();
-			PRINTF("::::::::::::::\r\n%s\r\n::::::::::::::\r\n", name);
-		}
-		do_header = 0;
-		corr = 2;
-	}
 	if (corr && (lns > maxy - 2)) lns -= corr;
 	corr = 0;
 	do {
@@ -693,7 +620,7 @@ printout(lns)
 			lns--;
 		} else {
 			if (flag) {
-				cleartoeol();
+				clreol();
 				PRINTF("*\r\n");
 				lns--;
 			} else {
@@ -929,10 +856,10 @@ emsg(s)
 	char	*s;
 {
 	putchar('\r');
-	cleartoeol();
-	highlight();
+	clreol();
+	highvideo();
 	PRINTF(s);
-	normal();
+	normvideo();
 	fflush(stdout);
 	prompt = 0;
 }

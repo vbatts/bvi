@@ -1,13 +1,14 @@
-/* BM_UNIX.C - Unix specific subroutines for BMORE
+/* bm_unix.c - Unix specific subroutines for BMORE
  *
  * 2000-05-31 V 1.3.0 beta
  * 2000-10-12 V 1.3.0 final
  * 2002-02-10 V 1.3.1
+ * 2003-07-04 V 1.3.2
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2002 by Gerhard Buergmann
- * Gerhard.Buergmann@altavista.net
+ * Copyright 1996-2003 by Gerhard Buergmann
+ * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -80,12 +81,21 @@ initterm()
 	no_tty = tcgetattr(fileno(stdout), &ostate);
 	if (!no_tty) {
 		nstate = ostate;
+		/*
+		 * is this really necessary??
+		 *
+		nstate.c_lflag &= ~(ICANON|ECHO|ECHOE|ECHONL);
+		 */
 		nstate.c_lflag &= ~(ICANON|ECHO|ECHOE|ECHONL);
 		nstate.c_cc[VMIN] = 1;
 		nstate.c_cc[VTIME] = 0;
 		tcsetattr(fileno(stdin), TCSADRAIN, &nstate);
 	}
 
+#ifdef DJGPP
+	maxx = 80;
+	maxy = 25;
+#else
 	if ((term = getenv("TERM")) == 0 || tgetent(buf, term) <= 0) {
 		printf("Dumb terminal\n");
 		maxx = 80;
@@ -99,6 +109,7 @@ initterm()
 	clear_sc = tgetstr("cl", &clearptr);
 	rev_start = tgetstr("so", &clearptr);
 	rev_end = tgetstr("se", &clearptr);
+#endif
 
 	no_intty = tcgetattr(fileno(stdin), &ostate);
 	tcgetattr(fileno(stderr), &ostate);
@@ -129,12 +140,12 @@ reset_tty()
 
 
 void
-sig()
+sig(sig)
+	int sig;
 {
-	signal(SIGINT, sig);
-	signal(SIGQUIT, sig);
-
-	got_int = TRUE;
+	reset_tty();
+	printf("\r\n");
+	exit(0);
 }
 
 
@@ -145,12 +156,15 @@ void
 doshell(cmd)
 	char	*cmd;
 {
+#ifndef DJGPP
 	char	*getenv();
 	char	*shell;
 	char	cline[128];
+#endif
 
 	printf("\n");
 
+#ifndef DJGPP
 	if ((shell = getenv("SHELL")) == NULL) shell = "sh";
 	else if(strrchr(shell,'/')) shell=(char *)(strrchr(shell,'/')+1);
 
@@ -161,6 +175,7 @@ doshell(cmd)
 		sprintf(cline, "%s -c \"%s\"", shell, cmd);
 		cmd = cline;
 	}
+#endif
 
 	reset_tty();
 	system(cmd);
@@ -173,40 +188,68 @@ doshell(cmd)
 
 
 void
-highvideo()
+highlight()
 {
+#ifndef DJGPP
 	if (rev_start && rev_end)
 		tputs(rev_start, 1, putchr);
+#endif
 }
 
 
 void
-normvideo()
+normal()
 {
+#ifndef DJGPP
 	if (rev_start && rev_end)
 		tputs(rev_end, 1, putchr);
+#endif
 }
 
 
 void
-clrscr()
+clearscreen()
 {
-    tputs(clear_sc, 1, putchr);
+#ifdef DJGPP
+	/* if (!no_tty)
+	{
+		int	n;
+
+		for (n = 0; n < maxy; n++) {
+			cleartoeol();
+			printf("\n");
+		}
+	} */
+#else
+	tputs(clear_sc, 1, putchr);
+#endif
 }
 
 
 void
 home()
 {
-    tputs(Home, 1, putchr);
+#ifdef DJGPP
+	if (!no_tty) printf("\r");
+#else
+	tputs(Home, 1, putchr);
+#endif
 }
 
 
 /* force clear to end of line */
 void
-clreol()
+cleartoeol()
 {
+#ifdef DJGPP
+	int	n;
+
+	home();
+	if (!no_tty) for (n = 1; n < maxx; n++) printf(" ");
+	home();
+#else
 	tputs(erase_ln, 1, putchr);
+#endif
 }
 
 

@@ -1,10 +1,14 @@
-.TH BMORE 1 "3 Jan 2002"
+.TH BMORE 1 "3 Jan 2004"
 .SH NAME
 bmore \- browse through a binary file
 .SH SYNOPSIS
 .B bmore
 [
-.B \-adi
+.B \-acdi
+] [
+.B \-n \fIlines\fP
+] [
+.B \-w \fIcols\fP
 ] [
 .B +\fIlinenumber\fP
 ] [
@@ -76,6 +80,9 @@ except that a header is printed before each file in a series.
 ASCII mode: no hex representation of the contents. Non printable 
 characters are displayed as a dot (.)
 .TP
+.B \-c
+Clear before displaying. Redrawing the screen instead of scrolling.
+.TP
 .B \-d
 Display error messages rather than ringing the terminal bell if
 an unrecognized command is used.
@@ -83,6 +90,14 @@ This is helpful for inexperienced users.
 .TP
 .B \-i
 Ignore case for searching.
+.TP
+.B \-n \fIlines\fP
+Displays the indicated number of \fIlines\fP in each screenful,
+rather than the default (the number of lines in the terminal screen
+less two).
+.TP
+.B \-w \fIcols\fP
+Display number of \fIcols\fP in each line.
 .TP
 .BI + linenumber\fP
 Start up at
