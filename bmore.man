@@ -1,0 +1,198 @@
+
+
+
+BMORE(1)                                                 BMORE(1)
+
+
+NNAAMMEE
+       bmore - browse through a binary file
+
+SSYYNNOOPPSSIISS
+       bbmmoorree  [  --aaddii  ]  [  ++_l_i_n_e_n_u_m_b_e_r  ] [ ++//_A_S_C_I_I_-_p_a_t_t_e_r_n ] [
+       ++\\_H_e_x_-_p_a_t_t_e_r_n ] [ _f_i_l_e_n_a_m_e ... ]
+
+
+DDEESSCCRRIIPPTTIIOONN
+       mmoorree is a filter that displays the contents  of  a  binary
+       file  on  the  terminal, one screenful at a time.  It nor­
+       mally pauses after each screenful, and prints ----MMoorree----  at
+       the bottom of the screen.  bbmmoorree provides a two-line over­
+       lap between screens for continuity.  If bbmmoorree  is  reading
+       from  a file rather than a pipe, the percentage of charac­
+       ters displayed so far is also shown.
+
+       bbmmoorree scrolls up  to  display  one  more  screen  line  in
+       response  to  a  RETURN  character;  it  displays  another
+       screenful in response to a SPACE  character.   Other  com­
+       mands are listed below.
+
+       The screen is divided in three sections or panes: The byte
+       offset (extreme left), the hex pane (middle), and an ascii
+       pane  (right)  which  shows  as printable characters those
+       bytes in the hex pane.  On an  80  column  terminal  there
+       will  be sixteen hex values and their ASCII values on each
+       screen line.  Note that (as one would  expect)  the  first
+       byte has the offset 0 (zero).
+
+       bbmmoorree sets the terminal to _n_o_e_c_h_o mode, so that the output
+       can be continuous.  Commands that you type do not normally
+       show up on your terminal, except for the // , \\ and !!  com­
+       mands.
+
+       If the standard output is not a terminal, mmoorree  acts  just
+       like  ccaatt(1V), except that a header is printed before each
+       file in a series.
+
+OOPPTTIIOONNSS
+       --aa     ASCII mode: no hex representation of the  contents.
+              Non printable characters are displayed as a dot (.)
+
+       --dd     Display error messages rather than ringing the ter­
+              minal  bell  if  an  unrecognized  command is used.
+              This is helpful for inexperienced users.
+
+       --ii     Ignore case for searching.
+
+       ++_l_i_n_e_n_u_m_b_e_r
+              Start up at _l_i_n_e_n_u_m_b_e_r.
+
+       ++//_A_S_C_I_I_-_p_a_t_t_e_r_n
+              Start  up  at  the  line  containing  the   regular
+
+
+
+                           13 June 2000                         1
+
+
+
+
+
+BMORE(1)                                                 BMORE(1)
+
+
+              expression  _p_a_t_t_e_r_n.   Note:  unlike  editors, this
+              construct should _n_o_t end with a `//'.  If  it  does,
+              then  the trailing slash is taken as a character in
+              the search pattern.
+
+
+       UUSSAAGGEE
+
+   CCoommmmaannddss
+       The commands take effect immediately;  it is not necessary
+       to  type  a carriage return.  Up to the time when the com­
+       mand character itself is given, the user may type the line
+       kill  character  to  cancel  the  numerical argument being
+       formed.  In addition, the user may type the erase  charac­
+       ter to redisplay the `----MMoorree----((_x_x%%))' message.
+
+       In the following commands, _i is a numerical argument (11 by
+       default).
+
+       _iSPACE    Display another screenful, or _i more lines if  _i
+                 is specified.
+
+       _iRETURN   Display another line, or _i more lines, if speci­
+                 fied.
+
+       _i^^DD       (CTRL-D) Display (scroll down) 11 more lines.  _i
+                 is given, the scroll size is set to _i.
+
+       _id        Same as ^^DD.
+
+       _izz        Same  as  SPACE,  except  that  _i,  if  present,
+                 becomes the new  default  number  of  lines  per
+                 screenful.
+
+       _iss        Skip _i lines and then print a screenful.
+
+       _iff        Skip _i screenfuls and then print a screenful.
+
+       _i^^BB       (CTRL-B) Skip back _i screenfuls and then print a
+                 screenful.
+
+       _b         Same as ^^BB (CTRL-D).
+
+       qq
+       QQ         Exit from mmoorree.
+
+       ==         Display the current line number.
+
+       vv         Drop into the bbvvii(1) editor at the current  off­
+                 set of the current file.
+
+       ww         Drop  into the bbvvii(1) editor at the current off­
+                 set of the current file. Only the portion of the
+                 file displayed on the screen will be loaded.
+
+
+
+                           13 June 2000                         2
+
+
+
+
+
+BMORE(1)                                                 BMORE(1)
+
+
+       hh         Help.   Give  a description of all the mmoorree com­
+                 mands.
+
+       _i//_p_a_t_t_e_r_n Search for the _ith  occurrence  of  the  regular
+                 expression   _p_a_t_t_e_r_n.    Display  the  screenful
+                 starting at the file position that contains  the
+                 _ith  match for the regular expression _A_S_C_I_I_-_p_a_t_­
+                 _t_e_r_n, or the end  of  a  pipe,  whichever  comes
+                 first.   If bbmmoorree is displaying a file and there
+                 is no such  match,  its  position  in  the  file
+                 remains  unchanged.   Regular expressions can be
+                 edited using erase and kill characters.  Erasing
+                 back  past  the  first column cancels the search
+                 command.
+
+       ´´         Single quote.  Go to the point  from  which  the
+                 last search started.  If no search has been per­
+                 formed in the current file, go to the  beginning
+                 of the file.
+
+       !!_c_o_m_m_a_n_d  Invoke  a shell to execute _c_o_m_m_a_n_d.  The charac­
+                 ters %% and  !!,  when  used  within  _c_o_m_m_a_n_d  are
+                 replaced  with the current filename and the pre­
+                 vious shell command, respectively.  If there  is
+                 no  current filename, %% is not expanded. Prepend
+                 a backslash to these characters to escape expan­
+                 sion.
+
+       _i::nn       Skip  to the _ith next filename given in the com­
+                 mand line, or to the last filename in  the  list
+                 if _i is out of range.
+
+       _i::pp       Skip  to  the _ith previous filename given in the
+                 command line, or to the first filename if  _i  is
+                 out of range.  If given while mmoorree is positioned
+                 within a file, go to the beginning of the  file.
+                 If  mmoorree  is  reading  from  a pipe, mmoorree simply
+                 rings the terminal bell.
+
+       ::ff        Display the current filename and offset  number.
+
+       ::qq
+       ::QQ        Exit from bbmmoorree (same as qq or QQ ))..
+
+       ..         Dot.  Repeat the previous command.
+
+
+       FFIILLEESS
+       //eettcc//tteerrmmccaapp        terminal data base
+       //uussrr//llooccaall//sshhaarree//bbmmoorree..hheellpp
+                           help file
+
+SSEEEE AALLSSOO
+       bbvvii(1), tteerrmmccaapp(5)
+
+
+
+                           13 June 2000                         3
+
+
