@@ -6,10 +6,11 @@
  * 2000-10-18  V 1.3.0 final
  * 2002-01-16  V 1.3.1
  * 2004-01-09  V 1.3.2
+ * 2013-08-23  V 1.4.0
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1990-2004 by Gerhard Buergmann
+ * Copyright 1990-2013 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -47,7 +48,7 @@
 
 #include "bmore.h"
 
-char	*copyright  = "Copyright (C) 1990-2004 by Gerhard Buergmann";
+char	*copyright  = "Copyright (C) 1990-2013 by Gerhard Buergmann";
 
 int		maxx, maxy;
 int		mymaxx = 0, mymaxy = 0;
@@ -68,6 +69,7 @@ char	numarr[64];		/* string for collecting number */
 char	addr_form[15];
 
 int		ascii_flag = 0;
+int		dup_print_flag = 0;
 int		c_flag = 0, d_flag = 0;
 int		exval = 0;
 int		init_search = 0;
@@ -87,7 +89,8 @@ static	int		cnt = 0;
 static	int		icnt = 0;
 static	int		smode;
 
-char	search_pat[BUFFER];	/* / or ? command */
+/* char	search_pat[BUFFER];	*/  /* / or ? command */
+char	bmore_search_pat[BUFFER];   /* / or ? command */
 char	*emptyclass = "Empty byte class '[]' or '[^]'";
 
 
@@ -182,11 +185,7 @@ main(argc, argv)
 				init_search = argv[n][1];
 				strcpy(sstring, &argv[n][2]);
 			} else {
-				if (argv[n][1] == '0') {
-					init_byte = (off_t)strtol(argv[n] + 1, NULL, 16);
-				} else {
-					init_byte = (off_t)strtol(argv[n] + 1, NULL, 10);
-				}
+				init_byte = strtoll(argv[n] + 1, NULL, 0);
 			}
 			n++;
 			break;
@@ -221,7 +220,7 @@ main(argc, argv)
 		}
 		if (exval) {
 		} else {
-			fseek(curr_file, init_byte, SEEK_SET);
+			fseeko(curr_file, init_byte, SEEK_SET);
 			bytepos += init_byte;
 		}
 	}
@@ -249,7 +248,7 @@ main(argc, argv)
 			do_next(1);
 			open_file(name);
 		}
-		fclose(curr_file);
+		if (curr_file) fclose(curr_file);
 		reset_tty();
 		exit(exval);
 	}
@@ -263,6 +262,7 @@ main(argc, argv)
 	/* main loop */
 	do {
 		to_print = 0;
+		dup_print_flag = 0;
 		if (prompt) {
 			if (prompt == 2) {
 				while (open_file(name)) {
@@ -311,15 +311,18 @@ main(argc, argv)
 
 		switch (ch) {
 		case ' ':	/*  Display next k lines of text [current screen size] */
+					dup_print_flag = 1;
 					if (precount > 0) to_print = precount;
 						else to_print = maxy;
 					break;
 		case 'z':	/* Display next k lines of bytes [current screen size]* */
+					dup_print_flag = 1;
 					if (precount > 0) z_line = precount;
 					to_print = z_line;
 					break;
 		case '\r':
 		case '\n':	/* Display next k lines of text [current screen size]* */
+					dup_print_flag = 1;
 					if (precount > 0) r_line = precount;
 					to_print = r_line;
 					break;
@@ -394,7 +397,7 @@ main(argc, argv)
 					} else {
 						clearscreen();
 						to_print = maxy + 1;
-						fseek(curr_file, screen_home, SEEK_SET);
+						fseeko(curr_file, screen_home, SEEK_SET);
 						bytepos = screen_home;
 					}
 					break;
@@ -412,7 +415,7 @@ main(argc, argv)
 						}
 						screen_home -= (maxy + 1) * out_len;
 						if (screen_home < 0) screen_home = 0;
-						fseek(curr_file, screen_home, SEEK_SET);
+						fseeko(curr_file, screen_home, SEEK_SET);
 						bytepos = screen_home;
 						to_print = maxy + 1;
 					}
@@ -434,7 +437,7 @@ main(argc, argv)
 						PRINTF("\r\n\r\n");
 					}
 					screen_home += (count + maxy) * out_len;
-					fseek(curr_file, screen_home, SEEK_SET);
+					fseeko(curr_file, screen_home, SEEK_SET);
 					bytepos = screen_home;
 					to_print = maxy;
 					break;
@@ -460,7 +463,7 @@ main(argc, argv)
 						bmbeep();
 					} else {
 						bytepos = last_search;
-						fseek(curr_file, bytepos, SEEK_SET);
+						fseeko(curr_file, bytepos, SEEK_SET);
 						screen_home = bytepos;
 						to_print = maxy;
 						PRINTF("\r");
@@ -581,7 +584,7 @@ do_next(n)
 {
 	if (numfiles) {
 		if (n == 1 && file_nr == numfiles) {
-			fclose(curr_file);
+			if (curr_file) fclose(curr_file);
 			reset_tty();
 			exit(exval);
 		}
@@ -595,7 +598,7 @@ do_next(n)
 		free(name);
 		name = strdup(*(files + file_nr - 1));
 	} else {
-		fclose(curr_file);
+		if (curr_file) fclose(curr_file);
 		reset_tty();
 		exit(exval);
 	}
@@ -611,7 +614,7 @@ open_file(name)
 	if (stat(name, &buf) > -1) {
 		filesize = buf.st_size;
 	}
-	if (curr_file != NULL) fclose(curr_file);
+	if (curr_file) fclose(curr_file);
 	if (numfiles > 1) do_header = 1;
 	if ((curr_file = fopen(name, "rb")) == NULL) {
 		perror(name);
@@ -686,7 +689,7 @@ printout(lns)
 			buffer1[num] = c;
 		}
 		if (!num) return 1;
-		if (memcmp(buffer1, buffer2, num) || !bytepos ) {
+		if (memcmp(buffer1, buffer2, num) || !bytepos || !dup_print_flag) {
 			memcpy(buffer2, buffer1, num);
 			putline(buffer2, num);
 			if (!no_tty) flag = TRUE;
@@ -707,6 +710,7 @@ printout(lns)
 			if (screen_home < 0) screen_home = 0;
 			return 0;
 		}
+		dup_print_flag = 1;
 	} while(num);
 	return 1;
 }
@@ -885,16 +889,19 @@ bmsearch(ch)
 		return;
 	}
 	if (ch == '/') {
-		if (ascii_comp(search_pat, sstring)) return;
+		/* if (ascii_comp(search_pat, sstring)) return; */
+		if (ascii_comp(bmore_search_pat, sstring)) return;
 	}
 	if (ch == '\\') {
-		if (hex_comp(search_pat, sstring)) return;
+		/* if (hex_comp(search_pat, sstring)) return; */
+		if (hex_comp(bmore_search_pat, sstring)) return;
 	}
 	oldpos = bytepos;
 	last_search = screen_home;
 	if (precount < 1) precount = 1;
 	while (precount--) {
-		while ((i = bmregexec(search_pat)) == 0);
+		/* while ((i = bmregexec(search_pat)) == 0); */
+		while ((i = bmregexec(bmore_search_pat)) == 0);
 		if (i == 1) {
 			screen_home = bytepos;
 			to_print = maxy;
@@ -909,7 +916,7 @@ emsg(string);
 */
 				emsg("Pattern not found");
 				bytepos = oldpos;
-				fseek(curr_file, bytepos, SEEK_SET);
+				fseeko(curr_file, bytepos, SEEK_SET);
 				break;
 			}
 		}
@@ -931,7 +938,7 @@ emsg(s)
 	putchar('\r');
 	cleartoeol();
 	highlight();
-	PRINTF(s);
+	PRINTF("%s", s);
 	normal();
 	fflush(stdout);
 	prompt = 0;

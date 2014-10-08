@@ -8,10 +8,12 @@
  * 2000-03-23 V 1.3.0 beta
  * 2000-08-17 V 1.3.0 final
  * 2004-01-04 V 1.3.2
+ * 2010-06-02 V 1.3.4
+ * 2014-05-03 V 1.4.0
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2004 by Gerhard Buergmann
+ * Copyright 1996-2014 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -30,10 +32,19 @@
 #include "bvi.h"
 #include "set.h"
 
-#include <limits.h>
-#ifndef SIZE_T_MAX
-#	define SIZE_T_MAX	ULONG_MAX
+#if 0
+/* nowadays (2009) we should make sure that bvi is compiled with LFS support: */
+/* defines _LARGEFILE_SOURCE _FILE_OFFSET_BITS=64 */
+/* if compiled without LFS support, stat() open() lseek() will fail with */
+/* EOVERFLOW(75)   Value too large for defined data type  */
+/* see README for configure arguments to enable lfs support in 32-bit executables */
+/* cygwin enables lfs by default */
 #endif
+
+#include <limits.h>
+#	ifndef OFF_T_MAX
+#  		define OFF_T_MAX    ULONG_LONG_MAX
+#	endif
 
 #ifdef HAVE_UNISTD_H
 #	include <unistd.h>
@@ -58,12 +69,17 @@ save(fname, start, end, flags)
 	int		flags;
 {
 	int		fd;
-	char	string[255];
+	char	*string;
 	char	*newstr;
 	off_t	filesize;
 
 	if (!fname) {
 		emsg("No file|No current filename");
+		return 0;
+	}
+	string = malloc((size_t)strlen(fname) + MAXCMD);
+	if (string == NULL) {
+		emsg("Out of memory");
 		return 0;
 	}
 	if (stat(fname, &buf) == -1) {
@@ -72,10 +88,12 @@ save(fname, start, end, flags)
 		if (S_ISDIR(buf.st_mode)) {
 			sprintf(string, "\"%s\" Is a directory", fname);
 			msg(string);
+			free(string);
 			return 0;
 		} else if (S_ISCHR(buf.st_mode)) {
 			sprintf(string, "\"%s\" Character special file", fname);
 			msg(string);
+			free(string);
 			return 0;
 		} else if (S_ISBLK(buf.st_mode)) {
 			/*
@@ -90,36 +108,42 @@ save(fname, start, end, flags)
 	if (filemode == PARTIAL) flags = O_RDWR;
 	if ((fd = open(fname, flags, 0666)) < 0) {
         sysemsg(fname);
+		free(string);
 		return 0;
 	}
 	if (filemode == PARTIAL) {
 		if (block_read) {
 			filesize = block_read;
-			sprintf(string, "\"%s\" range %lu-%lu", fname,
-				(unsigned long)block_begin,
-				(unsigned long)(block_begin - 1 + filesize));
+			sprintf(string, "\"%s\" range %llu-%llu", fname,
+				(unsigned long long)block_begin,
+				(unsigned long long)(block_begin - 1 + filesize));
 			if (lseek(fd, block_begin, SEEK_SET) < 0) {
 				sysemsg(fname);
+				free(string);
 				return 0;
 			}
 		} else {
 			msg("Null range");
+			free(string);
 			return 0;
         }
 	} else {
 		filesize = end - start + 1L;
-		sprintf(string, "\"%s\" %s%lu bytes", fname, newstr,
-			(unsigned long)filesize);
+
+		sprintf(string, "\"%s\" %s%llu bytes", fname, newstr,
+			(unsigned long long)filesize);
 	}
 
 	if (write(fd, start, filesize) != filesize) {
 		sysemsg(fname);
+		free(string);
 		close(fd);
 		return 0;
 	}
 	close(fd);
 	edits = 0;
 	msg(string);
+	free(string);
 	return 1;
 }
 
@@ -130,17 +154,31 @@ load(fname)
 	char	*fname;
 {
 	int		fd = -1;
-	char	string[MAXCMD];
+	char	*string;
 
 	buf.st_size = 0L;
 	if (fname != NULL) {
+		/*
 		sprintf(string, "\"%s\"", fname);
 		msg(string);
 		refresh();
+		*/
 		if (stat(fname, &buf) == -1) {
-			filemode = NEW;
+		/* check for EOVERFLOW       75              */
+		/* Value too large for defined data type     */
+		/* means bvi is compiled without lfs support */
+			if (errno == ENOENT) {
+				filemode = NEW;
+			} else {
+				move(maxy, 0);
+				endwin();
+				perror(fname);
+				exit(0);
+			}
+		/*
 		} else if (S_ISDIR(buf.st_mode)) {
 			filemode = DIRECTORY;
+		*/
 		} else if (S_ISCHR(buf.st_mode)) {
 			filemode = CHARACTER_SPECIAL;
 		} else if (S_ISBLK(buf.st_mode)) {
@@ -158,15 +196,23 @@ load(fname)
 				sysemsg(fname);
 				filemode = ERROR;
 			}
-		} else if (S_ISREG(buf.st_mode)) {
-			if ((unsigned long)buf.st_size > (unsigned long)SIZE_T_MAX) {
+		} else if (S_ISREG(buf.st_mode) || S_ISDIR(buf.st_mode)) {
+#if 0
+           /* stat() call above will fail if file is too large */
+           /* this size check will never fail                  */
+           if ((unsigned long long)buf.st_size > (unsigned long long)OFF_T_MAX) {
 				move(maxy, 0);
 				endwin();
 				printf("File too large\n");
 				exit(0);
 			}
+#endif
 			if ((fd = open(fname, O_RDONLY)) > 0) {
-				filemode = REGULAR;
+				if (S_ISREG(buf.st_mode)) {
+					filemode = REGULAR;
+				} else {
+					filemode = DIRECTORY;
+				}
 				if (access(fname, W_OK)) {
 					P(P_RO) = TRUE;
 					params[P_RO].flags |= P_CHANGED;
@@ -182,6 +228,9 @@ load(fname)
 	if (mem != NULL) free(mem);
 	memsize = 1024;
 	if (block_flag) {
+		if (block_flag == BLOCK_BEGIN) {
+			block_size = buf.st_size - block_begin;
+		}
 		memsize += block_size;
 	} else if (filemode == REGULAR) {
 		memsize += buf.st_size;
@@ -194,6 +243,15 @@ load(fname)
 	}
 	clear_marks();
 
+	if (fname != NULL) {
+		string = malloc((size_t)strlen(fname) + MAXCMD);
+	} else {
+		string = malloc(MAXCMD);
+	}
+	if (string == NULL) {
+		emsg("Out of memory");
+		return 0;
+	}
 
 	if (block_flag && ((filemode == REGULAR) || (filemode == BLOCK_SPECIAL))) {
 		if (lseek(fd, block_begin, SEEK_SET) < 0) {
@@ -204,9 +262,9 @@ load(fname)
 				sprintf(string, "\"%s\" Empty file", fname);
 				filemode = ERROR;
 			} else {
-				sprintf(string, "\"%s\" range %lu-%lu", fname,
-					(unsigned long)block_begin,
-					(unsigned long)(block_begin + filesize - 1));
+				sprintf(string, "\"%s\" range %llu-%llu", fname,
+					(unsigned long long)block_begin,
+					(unsigned long long)(block_begin + filesize - 1));
 				filemode = PARTIAL;
 				block_read = filesize;
 				P(P_OF) = block_begin;
@@ -215,7 +273,7 @@ load(fname)
 			msg(string);
 			refresh();
 		}
-	} else if (filemode == REGULAR) {
+	} else if ((filemode == REGULAR) || (filemode == DIRECTORY)) {
 		filesize = buf.st_size;
 		if (read(fd, mem, filesize) != filesize) {
             sysemsg(fname);
@@ -231,9 +289,9 @@ load(fname)
 			sprintf(string, "\"%s\" [New File]", fname);
 			break;
 		case REGULAR:
-			sprintf(string, "\"%s\" %s%lu bytes", fname,
+			sprintf(string, "\"%s\" %s%llu bytes", fname,
 				P(P_RO) ? "[Read only] " : "",
-				(unsigned long)filesize);
+				(unsigned long long)filesize);
 			break;
 		case DIRECTORY:
 			sprintf(string, "\"%s\" Directory", fname);
@@ -252,6 +310,7 @@ load(fname)
 	loc = HEX;
 	x = AnzAdd; y = 0;
 	repaint();
+	free(string);
 	return(filesize);
 }
 
@@ -336,12 +395,14 @@ enlarge(add)
 void
 do_shell()
 {
+	int ret;
+
 	addch('\n');
 	savetty();
 #ifdef DJGPP
-	system("");
+	ret = system("");
 #else
-	system(shell);
+	ret = system(shell);
 #endif
 	resetty();
 }

@@ -10,10 +10,13 @@
  * 2000-07-15 V 1.3.0 final
  * 2001-10-10 V 1.3.1  
  * 2003-07-04 V 1.3.2
+ * 2005-08-17 V 1.3.3
+ * 2010-06-02 V 1.3.4
+ * 2014-01-28 V 1.4.0
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2003 by Gerhard Buergmann
+ * Copyright 1996-2014 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -102,11 +105,11 @@ docmdline(cmdline)
 	char	*cmd;
 	char	*p;
 	size_t	len;
-	int		n, ok;
+	int		n, ok, ret;
 	int		force = 0;
 	int		saveflag;
 
-	if (cmdline == NULL) return;
+	if (*cmdline == '\0') return;
 	if (*cmdline == '"') return; 	/** comment **/
 	if (strlen(cmdline) > CMDSZ - 2) {
 		emsg("Command too long");
@@ -115,9 +118,9 @@ docmdline(cmdline)
 	strcpy(buff, cmdline);
 	cmd = buff;
 
-	/* With no address given, we start at the beginning of the file and
-	 * go to the end of the file (not line like in vi).
-	 */
+/* With no address given, we start at the beginning of the file and
+ * go to the end of the file (not line like in vi).
+ */
 	addr_flag = 0;
 	start_addr = mem;
 	end_addr = maxpos - 1;
@@ -154,7 +157,7 @@ docmdline(cmdline)
 		return;
 	}
 	if (start_addr < mem) {
-		sprintf(string, "Negative address@- first byte is %ld", P(P_OF));
+		sprintf(string, "Negative address@- first byte is %lld", (long long)P(P_OF));
 		emsg(string);
 		return;
 	}
@@ -191,7 +194,7 @@ docmdline(cmdline)
 		if (edits) msg("[No write]|[No write since last change]");
 		savetty();
 		endwin();
-		system(cmdbuf + 1);
+		ret = system(cmdbuf + 1);
 		fprintf(stderr, "[Hit return to continue]");
 		getchar();
 		doupdate();
@@ -304,11 +307,7 @@ docmdline(cmdline)
 				else	ok = save(c_argv[0], start_addr, end_addr, saveflag);
 		} else {
 			if (c_argc == 0) {
-				if (P(P_RO)) {
-					sprintf(string, "\"%s\" File is read only", name);
-					emsg(string);
-					return;
-				} else ok = save(name, start_addr, end_addr, saveflag);
+				save_chk(name, start_addr, end_addr, saveflag);
 			} else {
 				if (!stat(c_argv[0], &buf)) {
 					if (saveflag == WRITE) {
@@ -392,10 +391,10 @@ docmdline(cmdline)
 		}
 		if (chdir(c_argv[0])) sysemsg(c_argv[0]);
 	} else if (!strncmp("edit", cmdname, len) && CMDLNG(4, 1)) {
-	/*
-	 * The command ":e#" gets expanded to something like ":efile", so
-	 * detect that case here.
-	 */
+/*
+ * The command ":e#" gets expanded to something like ":efile", so
+ * detect that case here.
+ */
 		if (*cmd == 'e' && c_argc == 0) {
 			if (cmd[1] == '!')
 				(void) doecmd(&cmd[2], TRUE);
@@ -626,11 +625,27 @@ yd_addr()
 }
 
 
+/*********** Save file if not read only ********************/
+int
+save_chk(fname, start, end, flags)
+   char    *fname;
+   char    *start;
+   char    *end;
+   int     flags;
+{
+   if (P(P_RO)) {
+       sprintf(string, "\"%s\" File is read only", name);
+       emsg(string);
+       return FALSE;
+   }
+   return save(fname, start, end, flags);
+}
+
 void
 do_exit()
 {
 	if (edits) {
-		if (!save(name, mem, maxpos - 1L, WRITE)) return;
+		if (!save_chk(name, mem, maxpos - 1L, WRITE)) return;
 	}
 	if ((curfile + 1) < numfiles) {
 		sprintf(string, "%d %s", numfiles - curfile - 1, morefiles);
@@ -709,13 +724,20 @@ emsg(s)
 	char	*s;
 {
 	int	cnt;
+	int stchar;
 
 	if (P(P_EB)) beep();
+	if (P(P_MO)) {
+		stchar = statsize;
+	} else {
+		stchar = 0;
+	}
+
 	clearstr();
 	attrset(A_REVERSE);
 	cnt = outmsg(s);
 	attrset(A_NORMAL);
-	if (cnt >= (maxx - 25)) {		/* 25 = status */
+	if (cnt >= (maxx - stchar)) {
 		addch('\n');
 		wait_return(TRUE); }
 }
@@ -755,10 +777,18 @@ void
 msg(s)
 	char	*s;
 {
+	int stchar;
+
+	if (P(P_MO)) {
+		stchar = statsize;
+	} else {
+		stchar = 0;
+	}
 	clearstr();
-	if (outmsg(s) >= (maxx - 25)) {		/* 25 = status */
+	if (outmsg(s) >= (maxx - stchar)) {
 		addch('\n');
-		wait_return(TRUE); }
+		wait_return(TRUE);
+	}
 }
 
 

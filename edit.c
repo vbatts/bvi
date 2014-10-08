@@ -9,8 +9,10 @@
  * 2000-07-15 V 1.3.0 final
  * 2001-12-07 V 1.3.1
  * 2003-07-04 V 1.3.2
+ * 2006-04-05 V 1.3.3 alpha - binary representation
+ * 2014-09-30 V 1.4.0
  *
- * Copyright 1996-2003 by Gerhard Buergmann
+ * Copyright 1996-2014 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -29,7 +31,7 @@
 #include    "bvi.h"
 #include    "set.h"
 
-extern	int	precount;
+extern	long    precount;
 
 char contrd[][4] = {"NUL", " ^A", " ^B", " ^C", " ^D", " ^E", " ^F", "BEL",
 					" BS", "TAB", " NL", "HOM", "CLR", " CR", " ^N", " ^O",
@@ -42,7 +44,8 @@ char contru[][4] = {"NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL",
 					"CAN", " EM", "SUB", "ESC", " FS", " GS", " RS", " US",
 					"DEL" };
 char tmpbuf[10];
-char linbuf[256];
+char linbuf[16384];
+long hl_spat = 0;
 
 static  char    getcbuff[BUFFER];
 static  char    *getcnext = NULL;
@@ -113,7 +116,9 @@ edit(mode)
 			setcur();
 			continue;
 		}
-		if (ch == KEY_BACKSPACE || ch == BVICTRL('H')) {
+		if (ch == KEY_BACKSPACE 
+				|| ch == ASCII_DEL
+				|| ch == BVICTRL('H')) {
 			if (count > 0) {
 				len--;
 				count--;
@@ -275,7 +280,7 @@ escape:
 }
 
 
-/* Do the f, F, t ot T command
+/* Do the f, F, t or T command
  * If flag == 1 save the character in rep_buf
  * else setpage()
  */
@@ -290,14 +295,30 @@ do_ft(ch, flag)
 	PTR		ptr;
 
 	switch (ch) {
+		/*
 		case 1:		beep();
-					return NULL;					/* no previous command */
+					return NULL;					 no previous command
 		case -1:	if (chp == 'f' || chp == 't') dir = BACKWARD;
 						else dir = FORWARD;
-					break;						/* same again */
+					break;
 		case 0:		if (chp == 'f' || chp == 't') dir = FORWARD;
 						else dir = BACKWARD;
-					break;						/* same again */
+					break;
+		*/
+		case -1:	if (chp == 1) {
+						beep();
+						return NULL;
+					}
+					if (chp == 'f' || chp == 't') dir = BACKWARD;
+						else dir = FORWARD;
+					break;
+		case 0:		if (chp == 1) {
+						beep();
+						return NULL;
+					}
+					if (chp == 'f' || chp == 't') dir = FORWARD;
+						else dir = BACKWARD;
+					break;
 		default:	chp = ch;
 					if (chp == 'f' || chp == 't') dir = FORWARD;
 						else dir = BACKWARD;
@@ -324,7 +345,10 @@ do_ft(ch, flag)
 			if (ptr < mem) break;
 		}
 	} while (--precount > 0);
+	/*
 	if (*ptr == chi) {
+	*/
+	if (ptr >= mem && ptr <= maxpos) {
 		if (loc == HEX) toggle();
 		if (chp == 't') ptr--;
 		if (chp == 'T') ptr++;
@@ -434,15 +458,20 @@ setcur()
 void
 statpos()
 {
+	char bin_val [9];
 	unsigned char  Char1;
+	int i;
 	off_t	bytepos;
-	char	string[30], str[6];
+	char	string[MAXCMD+1], str[6];
 
 	if (!P(P_MO)) return;
 	bytepos = current - mem;
 	if (bytepos >= filesize) {
-		mvaddstr(maxy, status, "                           ");
-		return; }
+		// mvaddstr(maxy, status, "                           ");
+		move(maxy, status);
+		for (i = status; i < maxx; i++) addch(' ');
+		return;
+	}
 	Char1 = *(mem + bytepos);
 
 	if (isprint(Char1)) {
@@ -453,11 +482,22 @@ statpos()
 	} else if (Char1 == 127) {
 		if (P(P_US))    strcpy(str, contru[32]);
 			else        strcpy(str, contrd[32]);
-	} else strcpy(str, "   ");
-
-	sprintf(string, "%08lX  \\%03o 0x%02X %3d %3s",
-				(long)(bytepos + P(P_OF)), Char1, Char1, Char1, str);
+	} else {
+		strcpy(str, "   ");
+	}
+	for (i = 0; i < 8; ++i) {
+		if(Char1 & (1<<i)) {
+			bin_val[7-i] = '1';
+		} else {
+			bin_val[7-i] = '0';
+		}
+	}
+	bin_val[8] = '\0';
+	
+	statsize = sprintf(string, "%08llX %s \\%03o 0x%02X %3d %3s",
+		(long long)(bytepos + P(P_OF)), bin_val, Char1, Char1, Char1, str);
 	attrset(A_BOLD);
+	status = maxx - 1 - statsize;
 	mvaddstr(maxy, status, string);
 	attrset(A_NORMAL);
 }
@@ -468,32 +508,82 @@ printline(mempos, scpos)
 	PTR	mempos;
 	int	scpos;
 {
-	int		print_pos;
-	unsigned char Zeichen;
+	/* int		print_pos; */
+	PTR			hl_start = 0;
+	PTR			hl_end = 0;
+	PTR			f_start = 0;
+	PTR			f_end = 0;
+	int			print_pos = 0, mv_pos = 0;
+	unsigned char cur_ch;
 
 	if (mempos > maxpos) {
 		strcpy(linbuf, "~         ");
 	} else {
-		sprintf(linbuf, addr_form, (long)(mempos - mem + P(P_OF)));
+
+		sprintf(linbuf, addr_form, (long long)(mempos - mem + P(P_OF)));
 		*string = '\0';
 	}
+	mvaddstr(scpos, mv_pos, linbuf);
+	mv_pos = AnzAdd;
+	*linbuf = '\0';
+	if (hl_spat) {
+	    f_start = (mempos - Anzahl) < mem ? mem : (mempos - Anzahl);
+	    f_end = mempos + (2 * Anzahl);
+	    hl_start = fsearch_end(f_start, f_end, search_pat, &hl_end);
+	}
+
 	for (print_pos = 0; print_pos < Anzahl; print_pos++) {
+		if (hl_spat) {
+		    while (hl_start != NULL) {
+		        if (hl_start < mempos) {
+		            if (hl_end < mempos) {
+		                f_start = hl_start + 1;
+		                hl_start = fsearch_end(f_start, f_end, search_pat, &hl_end);
+		            } else {
+		                attrset(A_STANDOUT); /* start out highlighted */
+		                break;
+		            }
+		        } else if (hl_start >= mempos) {
+		            break;
+		        }
+		    }
+		    if (hl_start != NULL) {
+		        if ((hl_start - mempos) == print_pos) {
+		            mvaddstr(scpos, mv_pos, linbuf);
+		            mv_pos = AnzAdd + (3 * print_pos);
+		            *linbuf = '\0';
+		            attrset(A_STANDOUT);
+		        }
+		        if ((hl_end - mempos) == print_pos) {
+		            mvaddstr(scpos, mv_pos, linbuf);
+		            *linbuf = '\0';
+		            mv_pos = AnzAdd + (3 * print_pos);
+		            f_start = hl_end;
+		            hl_start = fsearch_end(f_start, f_end, search_pat, &hl_end);
+		            if (f_start != hl_start) {
+		                attrset(A_NORMAL);
+		            }
+		        }
+		    }
+		}
 		if (mempos + print_pos >= maxpos) {
 			sprintf(tmpbuf, "   ");
-			Zeichen = ' ';
+			cur_ch = ' ';
 		} else {
-			Zeichen = *(mempos + print_pos);
-			sprintf(tmpbuf, "%02X ", Zeichen);
+			cur_ch = *(mempos + print_pos);
+			sprintf(tmpbuf, "%02X ", cur_ch);
 		}
 		strcat(linbuf, tmpbuf);
-		if (isprint(Zeichen))
-			*(string + print_pos) = Zeichen;
+		if (isprint(cur_ch))
+			*(string + print_pos) = cur_ch;
 		else
 			*(string + print_pos) = '.';
 	}
+	mvaddstr(scpos, mv_pos, linbuf);
+	mv_pos = AnzAdd + (3 * print_pos);
+	attrset(A_NORMAL);
 	*(string + Anzahl) = '\0';
-	strcat(linbuf, string);
-	mvaddstr(scpos, 0, linbuf);
+	mvaddstr(scpos, mv_pos, string);
 }
 
 
@@ -639,11 +729,22 @@ fileinfo(fname)
 	char	*fname;
 {
 	off_t	bytepos;
-	char	fstatus[64];
+	char	fstatus[MAXCMD];
+	char	*string;
 
 	if (fname) {
+		string = malloc((size_t)strlen(fname) + MAXCMD);
+		if (string == NULL) {
+			emsg("Out of memory");
+			return;
+		}
 		sprintf(string, "\"%s\" ", fname);
 	} else {
+		string = malloc(MAXCMD);
+		if (string == NULL) {
+			emsg("Out of memory");
+			return;
+		}
 		strcpy(string, "No file ");
 	}
 	if (filemode != NEW && filemode != REGULAR)
@@ -652,13 +753,16 @@ fileinfo(fname)
 	if (edits) strcat(string, "[Modified] ");
 	if (filesize) {
 		bytepos = (pagepos + y * Anzahl + xpos()) - mem + 1L;
-		sprintf(fstatus, "byte %lu of %lu --%lu%%--", (long)bytepos, 
-			(long)filesize, (long)(bytepos * 100L / filesize));
+		sprintf(fstatus, "byte %llu of %llu --%llu%%--", 
+			(unsigned long long)bytepos, 
+			(unsigned long long)filesize,
+			(unsigned long long)(bytepos * 100L / filesize));
 		strcat(string, fstatus);
 	} else {
 		strcat(string, " 0 bytes");
 	}
 	msg(string);
+	free(string);
 }
 
 
@@ -856,7 +960,7 @@ do_ins_chg(start, arg, mode)
 			repaint();
 		    goto mfree;
 		}
-		do_append(count, tempbuf);
+		do_append((off_t)count, tempbuf);
 		memcpy(undo_buf, tempbuf, count);
 		repaint();
 		break;

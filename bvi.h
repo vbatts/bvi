@@ -9,10 +9,12 @@
  * 2000-10-24  V 1.3.0 final
  * 2001-10-29  V 1.3.1
  * 2003-07-04  V 1.3.2
+ * 2010-08-04  V 1.3.4
+ * 2014-10-01  V 1.4.0
  *
- *  NOTE: Edit this file with tabstop=4 !
+ * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2003 by Gerhard Buergmann
+ * Copyright 1996-2014 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -36,6 +38,8 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <setjmp.h>
+
+#define JOEHTG
 
 #if defined(__MSDOS__) && !defined(DJGPP)
 #	include "patchlev.h"
@@ -97,7 +101,8 @@
 #define BS			8
 #define	ESC			27
 #define SEARCH		0
-#define BVICTRL(n)		(n&0x1f)
+#define BVICTRL(n)	(n&0x1f)
+#define	ASCII_DEL	0x7f
 
 #define CMDLNG(a,b)     (len <= a && len >= b)
 
@@ -129,6 +134,12 @@
 
 #define SKIP_WHITE  while(*cmd!='\0'&&isspace(*cmd))cmd++;
 
+typedef enum _block_datum {
+    BLOCK_BEGIN = 1,
+    BLOCK_END = 2,
+    BLOCK_LEN = 4
+} block_datum;
+
 #ifdef DEBUG
 	extern FILE *debug_fp;
 #endif
@@ -139,6 +150,8 @@
 
 extern	char	*version;
 extern	char	addr_form[];
+extern	char	search_pat[];
+extern	long	hl_spat;
 extern	char    pattern[];
 extern	char    rep_buf[];
 extern	int		maxx, maxy, x, y;
@@ -148,7 +161,7 @@ extern	int		AnzAdd;
 extern	int		Anzahl, Anzahl3;
 extern	int		addr_flag;
 extern	int		ignore_case, magic;
-extern	int		screen, status;
+extern	int		screen, status, statsize;
 extern	PTR		mem;
 extern	PTR		maxpos;
 extern	PTR		pagepos;
@@ -204,7 +217,7 @@ extern  off_t   block_begin, block_end, block_size;
 	int		bregexec(PTR, char *);
 	int		chk_comm(int);
 	int		doecmd(char *, int);
-	int		do_append(int, char *), do_logic(int, char *);
+	int		do_append(off_t, char *), do_logic(int, char *);
 	int		do_delete(off_t, PTR);
 	int		doset(char *);
 	int		do_substitution(int, char *, PTR, PTR);
@@ -214,6 +227,7 @@ extern  off_t   block_begin, block_end, block_size;
 	PTR		wordsearch(PTR, char);
 	PTR		backsearch(PTR, char);
 	PTR		fsearch(PTR, PTR, char *);
+	PTR		fsearch_end(PTR, PTR, char *, PTR *);
 	PTR		rsearch(PTR, PTR, char *);
 	PTR		end_word(PTR);
 	PTR		calc_addr(char **, PTR);
@@ -256,8 +270,10 @@ extern  off_t   block_begin, block_end, block_size;
 	PTR		searching();
 	PTR		wordsearch();
 	PTR		backsearch();
-	int		bregexec();
+	/*	int		bregexec();	*/
+	PTR		bregexec();
 	PTR		fsearch();
+	PTR		fsearch_end();
 	PTR		rsearch();
 	PTR		end_word();
 	PTR		calc_addr();

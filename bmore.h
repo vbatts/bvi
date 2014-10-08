@@ -9,10 +9,11 @@
  * 2000-10-04  V 1.3.0 final
  * 2002-01-16  V 1.3.1  
  * 2003-02-20  V 1.3.2
+ * 2010-03-28  V 1.3.4
  *
  *  NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2003 by Gerhard Buergmann
+ * Copyright 1996-2010 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -57,6 +58,8 @@
 # else
 #  if HAVE_NCURSES_TERM_H
 #	include <ncurses/term.h>
+#  else 
+#	include <term.h>
 #  endif
 # endif
 #endif

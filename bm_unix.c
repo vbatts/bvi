@@ -4,10 +4,12 @@
  * 2000-10-12 V 1.3.0 final
  * 2002-02-10 V 1.3.1
  * 2003-07-04 V 1.3.2
+ * 2010-06-02 V 1.3.4
+ * 2013-08-22 V 1.4.0
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2003 by Gerhard Buergmann
+ * Copyright 1996-2013 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -156,6 +158,7 @@ void
 doshell(cmd)
 	char	*cmd;
 {
+	int	ret;
 #ifndef DJGPP
 	char	*getenv();
 	char	*shell;
@@ -178,11 +181,11 @@ doshell(cmd)
 #endif
 
 	reset_tty();
-	system(cmd);
+	ret = system(cmd);
 	set_tty();
 	printf("\r");
 	home();
-	fseek(curr_file, screen_home, SEEK_SET);
+	fseeko(curr_file, screen_home, SEEK_SET);
 	bytepos = screen_home;
 }
 

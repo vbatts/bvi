@@ -6,7 +6,7 @@
 # "autoconf" program (constructs like "@foo@" will get replaced in the
 # actual Makefile.
 #
-# Copyright (c) 1996-2003 by Gerhard Buergmann
+# Copyright (c) 1996-2014 by Gerhard Buergmann
 # gerhard@puon.at
 # 
 # 1996-01-18 V 1.0.0
@@ -16,28 +16,31 @@
 # 2000-05-31 V 1.3.0 beta
 # 2000-10-01 V 1.3.0 final
 # 2003-07-03 V 1.3.2
+# 2014-10-01 V 1.4.0
 #
 ###############################################
 
 srcdir = @srcdir@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
+datarootdir = @datarootdir@
 
-bindir = $(DESTDIR)@bindir@
-mandir = $(DESTDIR)@mandir@
-libdir = $(DESTDIR)@libdir@
+bindir  = $(DESTDIR)@bindir@
+mandir  = $(DESTDIR)@mandir@
+libdir  = $(DESTDIR)@libdir@
+helpdir = $(DESTDIR)@datadir@/bvi
 
 man1dir = $(mandir)/man1
 
-OBJS   =  bvi.o comm.o set.o re.o io.o edit.o recomp.o
-HEADER =  bvi.h set.h
-BMOBJ  =  bmore.o bm_unix.o recomp.o
-CC     =  @CC@
-CFLAGS =  @CFLAGS@ @CPPFLAGS@
-DEFS   =  @DEFS@
-LDFLAGS=  @LDFLAGS@
-LIBS   =  @LIBS@
-SHELL  =  /bin/sh
+OBJS     =  bvi.o comm.o set.o re.o io.o edit.o recomp.o
+INCLUDES =  bvi.h set.h
+BMOBJ    =  bmore.o bm_unix.o recomp.o
+CC       =  @CC@
+CFLAGS   =  @CFLAGS@ @CPPFLAGS@
+DEFS     =  @DEFS@
+LDFLAGS  =  @LDFLAGS@
+LIBS     =  @LIBS@
+SHELL    =  /bin/sh
 
 
 
@@ -48,32 +51,32 @@ INSTALL_DATA = @INSTALL_DATA@
 
 all: bvi bmore
 
-bvi: $(OBJS)
+bvi: $(OBJS) $(HEADER)
 	$(CC) $(LDFLAGS) -o bvi $(OBJS) $(LIBS)
 
 bmore: $(BMOBJ)
 	$(CC) $(LDFLAGS) -o bmore $(BMOBJ) $(LIBS)
 
-.c.o:
+%.o: %.c $(INCLUDES)
 	$(CC) $(CFLAGS) $(DEFS) -c $<
 
 bmore.o: bmore.c
-	$(CC) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(libdir)/bmore.help\" -c $<
+	$(CC) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(helpdir)/bmore.help\" -c $<
 
 
 install: all installdirs
 	@echo "Installing bvi"
 	@$(INSTALL_DATA) bvi.1 bmore.1 $(man1dir)
-	@$(INSTALL_PROGRAM) -s bvi $(bindir)
-	@$(INSTALL_PROGRAM) -s bmore $(bindir)
-	@$(INSTALL_DATA) bmore.help $(libdir)
+	@$(INSTALL_PROGRAM) bvi $(bindir)
+	@$(INSTALL_PROGRAM) bmore $(bindir)
+	@$(INSTALL_DATA) bmore.help $(helpdir)
 	@if [ -f $(bindir)/bview ]; then rm $(bindir)/bview; fi
 	@if [ -f $(bindir)/bvedit ]; then rm $(bindir)/bvedit; fi
 	@ln $(bindir)/bvi $(bindir)/bview
 	@ln $(bindir)/bvi $(bindir)/bvedit
 
 installdirs:
-	$(SHELL) ${srcdir}/mkinstalldirs $(bindir) $(libdir) $(man1dir)
+	$(SHELL) ${srcdir}/mkinstalldirs $(bindir) $(helpdir) $(man1dir)
 
 uninstall:
 	@echo "Uninstalling bvi"
@@ -81,7 +84,7 @@ uninstall:
 	@if [ -f $(bindir)/bvedit ]; then rm $(bindir)/bvedit; fi
 	@if [ -f $(bindir)/bvi ]; then rm $(bindir)/bvi; fi
 	@if [ -f $(bindir)/bmore ]; then rm $(bindir)/bmore; fi
-	@if [ -f $(libdir)/bmore.help ]; then rm $(libdir)/bmore.help; fi
+	@if [ -f $(helpdir)/bmore.help ]; then rm $(helpdir)/bmore.help; fi
 	@if [ -f $(man1dir)/bvi.1 ]; then rm $(man1dir)/bvi.1; fi
 	@if [ -f $(man1dir)/bmore.1 ]; then rm $(man1dir)/bmore.1; fi
 

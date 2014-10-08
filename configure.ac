@@ -1,9 +1,12 @@
 dnl Process this file with autoconf to produce a configure script.
+
 AC_INIT
 AC_CONFIG_SRCDIR([bvi.c])
 AC_CONFIG_HEADER(config.h)
+AC_SYS_LARGEFILE
 
 AC_CANONICAL_HOST
+CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES"
 
 dnl On SunOS4 systems you have to use the /usr/5bin/cc compiler
 dnl to get the SYSV curses library:
@@ -37,6 +40,7 @@ AC_PROG_INSTALL
 dnl Check for typedefs
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(void *)
 
 AC_CHECK_TYPE(size_t, unsigned int)
@@ -58,24 +62,29 @@ AC_ARG_WITH(ncurses,
   fi
 ])
 
-AC_CHECK_HEADER(ncurses.h,
-    AC_CHECK_LIB(ncurses, initscr,
-        AC_DEFINE(HAVE_NCURSES_H) LIBS="${LIBS} -lncurses",
-        AC_CHECK_LIB(curses, initscr,
-        AC_DEFINE(HAVE_CURSES_H) LIBS="${LIBS} -lcurses",
-        AC_MSG_ERROR([bvi requires the curses library]))),
-    AC_CHECK_HEADER(curses.h,
-        AC_CHECK_LIB(curses, initscr,
-		AC_DEFINE(HAVE_CURSES_H) LIBS="${LIBS} -lcurses",
-		AC_MSG_ERROR([bvi requires the curses library])),
-		AC_MSG_ERROR([bvi requires the curses library])))
+AC_CHECK_HEADER([ncurses.h],[
+    AC_SEARCH_LIBS([initscr], [ncurses],[
+            AC_DEFINE(HAVE_NCURSES_H)
+	    AC_SEARCH_LIBS([tputs], [tinfo])], [
+        AC_SEARCH_LIBS([initscr], [curses],[
+                AC_DEFINE(HAVE_CURSES_H)
+                AC_SEARCH_LIBS([tputs], [tinfo])],[
+	    AC_MSG_ERROR([bvi requires the curses library])])])],[
+    AC_CHECK_HEADER([curses.h],[
+    	AC_SEARCH_LIBS([initscr], [curses], [
+		AC_DEFINE(HAVE_CURSES_H)],[
+		AC_MSG_ERROR([bvi requires the curses library])])],[
+		AC_MSG_ERROR([bvi requires the curses library])])])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 dnl AC_TYPE_SIZE_T
 
 dnl Checks for library functions.
 dnl AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(strdup strtol strerror memmove)
+AC_CHECK_FUNCS(strdup strtol strtoll strerror memmove)
+AC_FUNC_FSEEKO
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
 
 AC_PROG_INSTALL
 

@@ -93,7 +93,7 @@
 .nr % 0
 .rr F
 .\}
-.TH BVI 1 "BVI Version 1.3.2" "3/Jan/2004" "User Commands"
+.TH BVI 1 "BVI Version 1.4.0" "25/Aug/2013" "User Commands"
 .IX Title "BVI 1"
 .UC
 .IX Name "bvi, bview - visual display editor for binary files"
@@ -194,11 +194,11 @@
 bvi, bview \- visual editor for binary files
 .SH "VERSION"
 .IX Header "VERSION"
-bvi-1.3.2
+bvi-1.4.0
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-\fBbvi\fR\ \ \ [\fB\-R\fR]\ [\fB\-c\fR\ \fIcmd\fR]\ [\fB\-f\fR\ \fIscript\fR]\ [\fB\-b\fR\ \fIbegin\fR]\ [\fB\-e\fR\ \fIend\fR]\ [\fB\-s\fR\ \fIsize\fR]\ \fIfile\fR...
-\fBbview\fR\ [\fB\-R\fR]\ [\fB\-c\fR\ \fIcmd\fR]\ [\fB\-f\fR\ \fIscript\fR]\ [\fB\-b\fR\ \fIbegin\fR]\ [\fB\-e\fR\ \fIend\fR]\ [\fB\-s\fR\ \fIsize\fR]\ \fIfile\fR...
+\fBbvi\fR\ \ \ [\fB\-R\fR]\ [\fB\-c\fR\ \fIcmd\fR]\ [\fB\-f\fR\ \fIscript\fR]\ [\fB\-s\fR\ \fIskip\fR]\ [\fB\-e\fR\ \fIend\fR]\ [\fB\-n\fR\ \fIlength\fR]\ \fIfile\fR...
+\fBbview\fR\ [\fB\-R\fR]\ [\fB\-c\fR\ \fIcmd\fR]\ [\fB\-f\fR\ \fIscript\fR]\ [\fB\-s\fR\ \fIskip\fR]\ [\fB\-e\fR\ \fIend\fR]\ [\fB\-n\fR\ \fIlength\fR]\ \fIfile\fR...
 .SH "OPTIONS"
 .IX Header "OPTIONS"
 .Ip "\fIfile\fR..." 4
@@ -212,18 +212,24 @@ the buffer.  You can get to the other files with the ":next" command.
 \*(L"Readonly": The readonly flag is set for all the files,
 preventing accidental overwriting with a write command.
 
-.Ip "\fB\-b\fR \fIbegin\fR" 4
-.IX Item "\fB\-b\fR \fIbegin\fR"
+.Ip "\fB\-s\fR \fIskip\fR" 4
+.IX Item "\fB\-s\fR \fIskip\fR"
 causes bvi to load a file not from the start but from
-offset \fIbegin\fR.
+offset \fIskip\fR.
+Skip offset bytes from the beginning of the input.  By default, offset
+is interpreted as a decimal number.  With a leading 0x or 0X, offset is
+interpreted as a hexadecimal number, otherwise, with a leading 0, offset
+is interpreted as an octal number.  Appending the character b, k, or m
+to offset causes it to be interpreted as a multiple of 512, 1024, or
+1048576, respectively.
 
 .Ip "\fB\-e\fR \fIend\fR" 4
 .IX Item "\fB\-e\fR \fIend\fR"
 causes bvi to load a file not till end but till address \fIend\fR.
 
-.Ip "\fB\-s\fR \fIsize\fR" 4
-.IX Item "\fB\-s\fR \fIsize\fR"
-causes bvi not to load the complete file but only \fIsize\fR bytes.
+.Ip "\fB\-n\fR \fIlength\fR" 4
+.IX Item "\fB\-n\fR \fIlength\fR"
+causes bvi not to load the complete file but only \fIlength\fR bytes.
 
 .Ip "\fB\-c\fR \fIcmd\fR" 4
 .IX Item "\fB\-c\fR \fIcmd\fR"

@@ -8,8 +8,10 @@
  * 1999-09-10 V 1.2.0
  * 2000-04-25 V 1.3.0 beta
  * 2000-09-29 V 1.3.0 final
+ * 2010-06-02 V 1.3.4
+ * 2013-08-24 V 1.4.0
  *
- * Copyright 1996-2003 by Gerhard Buergmann
+ * Copyright 1996-2013 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -43,7 +45,7 @@ char	*emptyclass = "Bad character class|Empty byte class '[]' or '[^]' cannot ma
 
 
 
-int
+PTR
 bregexec(start, scan)
 	PTR		start;
 	char	*scan;
@@ -59,10 +61,12 @@ bregexec(start, scan)
 				if (P(P_IC) && smode == ASCII)	test = toupper(*start);
 					else 						test = *start;
 				if (count == 1) {
-					if (test != *scan) return 0;
+					/* if (test != *scan) return 0; */
+					if (test != *scan) return NULL;
 					scan++;
 				} else if (count > 1) {
-					if (sbracket(test, scan, count)) return 0;
+					/* if (sbracket(test, scan, count)) return 0; */
+					if (sbracket(test, scan, count)) return NULL;
 					scan += count;
 				}
 				*act++ = *start++;
@@ -83,9 +87,11 @@ bregexec(start, scan)
 						while (start < maxpos) {
 							if (bregexec(start, scan + count)) {
 								*act = '\0';
-								return 1;
+								/* return 1; */
+								return start;
 							}
-							if (sbracket(test, scan, count)) return 0;
+							/* if (sbracket(test, scan, count)) return 0; */
+							if (sbracket(test, scan, count)) return NULL;
 							*act++ = *start++;
 							if (P(P_IC) && smode == ASCII)	test = toupper(*start);
 								else 						test = *start;
@@ -100,14 +106,19 @@ bregexec(start, scan)
 					}
 				} else {		/* ".*"  */
 					while (start < maxpos) {
-						if (bregexec(start, scan)) { *act = '\0'; return 1; }
+						/* if (bregexec(start, scan)) { *act = '\0'; return 1; } */
+						if (bregexec(start, scan)) {
+							*act = '\0';
+							return start;
+						}
 						start++;
 					}
 				}
 		}
 	}
 	*act = '\0';
-	return 1;	/* found */
+	return start;   /* found */
+	/* return 1;	*/
 }
 
 
@@ -487,22 +498,39 @@ patcpy(s1, s2, delim)
 
 
 PTR
+fsearch_end(start, end, smem, s_end)
+/*
 fsearch(start, end, smem)
+*/
 	PTR		start;
 	PTR		end;
 	char	*smem;
+	PTR		*s_end;
 {
 	PTR	spos;
 
 	signal(SIGINT, jmpproc);
 	for (spos = start; spos <= end; spos++) {
-		if (bregexec(spos, smem)) {
+		/* if (bregexec(spos, smem)) { */
+		if (*s_end = bregexec(spos, smem)) {
 			signal(SIGINT, SIG_IGN);
+			*s_end++;
 			return(spos);
 		}
 	}
 	signal(SIGINT, SIG_IGN);
 	return(NULL);
+}
+
+
+PTR
+fsearch(start, end, smem)
+   PTR     start;
+   PTR     end;
+   char    *smem;
+{
+   PTR     s_end;
+   return fsearch_end(start, end, smem, &s_end);
 }
 
 
@@ -542,7 +570,7 @@ calc_addr(pointer, def_addr)
 	addr = def_addr;
 	SKIP_WHITE
 	if (*cmd >= '1' && *cmd <= '9')  {
-		addr = mem + strtol(cmd, &cmd, 10) - P(P_OF);
+		addr = mem + strtoll(cmd, &cmd, 10) - P(P_OF);
 	} else {
 		ch = *cmd;
 		switch (ch) {
@@ -619,19 +647,11 @@ calc_addr(pointer, def_addr)
 		if (*cmd == '+') {
 			cmd++;
 			SKIP_WHITE
-			if (*cmd >= '1' && *cmd <= '9')  {
-				addr += strtol(cmd, &cmd, 10);
-			} else if (*cmd == '0') {
-				addr += strtol(cmd, &cmd, 16);
-			}
+			addr += strtoll(cmd, &cmd, 0);
 		} else {
 			cmd++;
 			SKIP_WHITE
-			if (*cmd >= '1' && *cmd <= '9')  {
-				addr -= strtol(cmd, &cmd, 10);
-			} else if (*cmd == '0') {
-				addr -= strtol(cmd, &cmd, 16);
-			}
+			addr -= strtoll(cmd, &cmd, 0);
 		}
 		SKIP_WHITE
 	}

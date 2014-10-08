@@ -1,3 +1,52 @@
+New in release 1.4.0 (stable)
+=============================
+
+* Minor fixes
+
+
+New in release 1.4.0rc2
+=======================
+
+* Ubuntu bug #252604 fixed
+* set scroll fixed
+* adding ASCII_DEL 0x7f for backspace
+
+
+New in release 1.4.0rc
+======================
+
+* b B w W commands behave equally now (SF bug #5)
+* .bvirc empty line bug fixed (SF bug #6)
+* g-command bug fixed (SF bug #7)
+* several minor fixes
+
+
+New in release 1.4.0beta
+========================
+
+* ~ - bug fixed (by elo3456)
+* debian bug #469704 fixed (bmore)
+* debian bug #715687 fixed (bmore)
+* red hat bug #925119 fixed
+
+
+New in release 1.4.0alpha
+==========================
+
+* highlight search result (by David Kelley)
+* Large File Support added (by Joe Hinteregger)
+* binary representation of byte in status line
+* command line options renamed for compability with hexdump
+* Offset handling fixed (Bug item #3036881)
+* noshowmode: fix length of statusline
+* bmore: 'b' bug fixed (by Tatsuyoshi)
+* ';' bug fixed (by Nathan Hougthon and Christian Weisgerber)
+* ZZ write bug fixed (by Joe Hinteregger)
+* Buffer overflow if terminal > 255 columns (by Richard Yao)
+* configure fixed (by Richard Yao)
+* ncurses with tinfo fixed (by Richard Yao)
+
+
 New in release 1.3.2
 ====================
 

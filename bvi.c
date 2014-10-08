@@ -9,10 +9,13 @@
  * 2000-10-24  V 1.3.0 final
  * 2002-01-03  V 1.3.1
  * 2004-01-04  V 1.3.2
+ * 2006-04-04  V 1.3.3
+ * 2013-08-23  V 1.4.0alpha
+ * 2014-10-07  V 1.4.0
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2004 by Gerhard Buergmann
+ * Copyright 1996-2014 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -38,13 +41,13 @@
 #endif
 
 
-char	*copyright  = "Copyright (C) 1996-2004 by Gerhard Buergmann";
+char	*copyright  = "Copyright (C) 1996-2014 by Gerhard Buergmann";
 
 jmp_buf	env;        /* context for `longjmp' function   */
 
 int		loc;
 int		maxx, maxy, x, xx, y;
-int		screen, status;
+int		screen, status, statsize;
 off_t	size;
 PTR		mem = NULL;
 PTR		curpos;
@@ -53,15 +56,19 @@ PTR		pagepos;
 PTR		spos;
 char	*name = NULL;
 char	*shell;
-char	string[MAXCMD];
-char	cmdstr[MAXCMD + 1] = "";
+char	string[MAXCMD+1];
+char	cmdstr[MAXCMD+1] = "";
 FILE	*Ausgabe_Datei;
 int		edits = 0;
 int		AnzAdd, Anzahl, Anzahl3;
 off_t	filesize, memsize, undosize;
-long	precount = -1;	/* number preceding command */
+
+
+long	precount = -1;
 
 int		block_flag = 0;
+
+
 off_t	block_begin, block_end, block_size;
 
 
@@ -70,7 +77,7 @@ int		numfiles;		/* number of input files */
 int		curfile;		/* number of the current file */
 
 int		arrnum = 0;
-char	numarr[64];		/* string for collecting number */
+char	numarr[MAXCMD+1];		/* string for collecting number */
 char	rep_buf[BUFFER];
 
 PTR		current;
@@ -88,17 +95,19 @@ char	addr_form[15];
 char	*nobytes = "No bytes@in the buffer";
 
 static	char	progname[8];
-static	char	line[MAXCMD];
+static	char	line[MAXCMD+1];
 static	int		mark;
-static	int		scrolly;
 static	int		wrstat = 1;
 
 
 void
 usage()
 {
+
 	fprintf(stderr, "Usage: %s [-R] [-c cmd | +cmd] [-f script]\n\
-       [-b begin] [-e end] [-s size] file ...\n", progname);
+	   [-s skip] [-e end] [-n length] file ...\n\
+	   file offset/size: 10k, 20m, 1g, 0x1000 hex, 0200 octal\n", progname);
+
 	exit(1);
 }
 
@@ -115,6 +124,8 @@ main(argc, argv)
 	int		script = -1;
 	off_t	inaddr;
 	char	*poi;
+
+
 
 #ifdef HAVE_LOCALE_H
 	setlocale(LC_ALL, "");
@@ -150,26 +161,27 @@ main(argc, argv)
 				} else {
 					script = ++n;
 				}
-			} else if (argv[n][1] == 'b') {
+
+			} else if (argv[n][1] == 's') {
 				if (argv[n + 1] == NULL || argv[n + 1][0] == '-') {
 					usage();
 				} else {
 					block_begin = calc_size(argv[++n]);
-					block_flag |= 1;
+					block_flag |= BLOCK_BEGIN;
 				}
 			} else if (argv[n][1] == 'e') {
 				if (argv[n + 1] == NULL || argv[n + 1][0] == '-') {
 					usage();
 				} else {
 					block_end = calc_size(argv[++n]);
-					block_flag |= 2;
+					block_flag |= BLOCK_END;
 				}
-			} else if (argv[n][1] == 's') {
+			} else if (argv[n][1] == 'n') {
 				if (argv[n + 1] == NULL || argv[n + 1][0] == '-') {
 					usage();
 				} else {
 					block_size = calc_size(argv[++n]);
-					block_flag |= 4;
+					block_flag |= BLOCK_LEN;
 				}
 			} else if (argv[n][1] == 'w') {
 				if (argv[n][2] == '\0') {
@@ -197,28 +209,39 @@ main(argc, argv)
 			break;
 		}
 	}
+	/* TODO default block_size - end of file up to max 64 KB with warning */
 	switch (block_flag) {
-	case 2:
+	case BLOCK_BEGIN:
+		/* Acc. to SF-Error 3036881 we should use the whole rest of the file */
+		/*
+		block_size = 1024;
+		block_end = block_begin + block_size - 1;
+		*/
+		break;
+	case BLOCK_END:
 		block_begin = 0;
-	case 1|2:
 		block_size = block_end - block_begin + 1;
 		break;
-	case 4:
+	case BLOCK_BEGIN|BLOCK_END:
+		block_size = block_end - block_begin + 1;
+		break;
+	case BLOCK_LEN:
 		block_begin = 0;
-	case 1|4:
 		block_end = block_begin + block_size - 1;
 		break;
-	case 2|4:
+	case BLOCK_BEGIN|BLOCK_LEN:
+		block_end = block_begin + block_size - 1;
+		break;
+	case BLOCK_END|BLOCK_LEN:
 		block_begin = block_end + 1 - block_size;
 		break;
-	case 1|2|4:
+	case BLOCK_BEGIN|BLOCK_END|BLOCK_LEN:
 		if (block_end - block_begin != block_size + 1) {
 			fprintf(stderr, "Ambigous block data\n");
 			exit(1);
 		}
 		break;
 	}
-
 	if (block_flag && !numfiles) {
 		fprintf(stderr, "Cannot read a range of a nonexisting file\n");
 		exit(1);
@@ -232,8 +255,7 @@ main(argc, argv)
 
 	maxy = LINES;
 	if (params[P_LI].flags & P_CHANGED) maxy = P(P_LI);
-	scrolly = maxy / 2;
-	P(P_SS) = scrolly;
+	P(P_SS) = maxy / 2;
 	P(P_LI) = maxy;
 	maxy--;
 	keypad(stdscr, TRUE);
@@ -242,18 +264,27 @@ main(argc, argv)
 	cbreak();
 	noecho();
 
-	/*
-	AnzAdd = 8;
-	strcpy(addr_form,  "%06lX  ");
-	*/
-	AnzAdd = 10;
-	strcpy(addr_form,  "%08lX  ");
+	{
+       /* address column width */
+       /*  default is 8 + 2 blanks  */
+       /* if block_begin has 8 hex digits or more */
+       /* reserve 1 hex digit more than required  */
+       char tmp[sizeof(block_begin) * 2 + 3];
+       AnzAdd = sprintf(tmp, "%llX", (long long unsigned)block_begin) + 1;
+       if (AnzAdd < 8)
+           AnzAdd = 8;
+       if (AnzAdd > sizeof(block_begin) * 2)
+           AnzAdd = sizeof(block_begin) * 2;
+       sprintf(addr_form,  "%%0%dllX  ", AnzAdd);
+       AnzAdd = sprintf(tmp, addr_form, block_begin);
+	}
 
 	Anzahl = ((COLS - AnzAdd - 1) / 16) * 4;
 	P(P_CM) = Anzahl;
 	maxx = Anzahl * 4 + AnzAdd + 1;
 	Anzahl3 = Anzahl * 3;
-	status = Anzahl3 + Anzahl - 17;
+	statsize = 35;
+	status = Anzahl3 + Anzahl - statsize;
 	screen = Anzahl * (maxy - 1);
 
 	signal(SIGINT, SIG_IGN);
@@ -279,11 +310,11 @@ main(argc, argv)
 		setcur();
 		ch = vgetc();
 		while (ch >= '0' && ch <= '9') {
-			numarr[arrnum++] = ch;
+			if (arrnum < MAXCMD) numarr[arrnum++] = ch;
 			ch = vgetc();
 		}
 		numarr[arrnum] = '\0';
-		if (arrnum != 0) precount = strtol(numarr, (char **)NULL, 10);
+		if (arrnum != 0) precount = strtoll(numarr, (char **)NULL, 10);
 			else precount = -1;
 		lflag = arrnum = 0;
 
@@ -303,7 +334,7 @@ main(argc, argv)
 					break;
 		case '~':	if (precount < 1) precount = 1;
 					sprintf(rep_buf, "%ld~", precount);
-					do_tilde(precount);
+					do_tilde((off_t)precount);
 					lflag++;
 					break;
 		case KEY_HOME:
@@ -332,6 +363,7 @@ main(argc, argv)
 						else	x = AnzAdd + Anzahl3;
 					break;
 		case BVICTRL('H'):
+		case ASCII_DEL:
 		case KEY_BACKSPACE:
 		case KEY_LEFT:
 		case 'h':	do {
@@ -398,12 +430,12 @@ main(argc, argv)
 					repaint();
 					break;
 		case BVICTRL('D'):
-					if (precount > 1) scrolly = precount;
-					scrolldown(scrolly);
+					if (precount > 1) P(P_SS) = precount;
+					scrolldown(P(P_SS));
 					break;
 		case BVICTRL('U'):
-					if (precount > 1) scrolly = precount;
-					scrollup(scrolly);
+					if (precount > 1) P(P_SS) = precount;
+					scrollup(P(P_SS));
 					break;
 		case BVICTRL('E'):
 					if (y > 0) y--;
@@ -429,7 +461,7 @@ main(argc, argv)
 					new_screen();
 					break;
 		case BVICTRL('Y'):
-					if (y < maxy) y++;
+					if (y < maxy - 1) y++;
 					scrollup(1);
 					break;
 		case 'A':   smsg("APPEND MODE");
@@ -467,17 +499,19 @@ main(argc, argv)
 					}
 					break;
 		case 'g':	last_motion = current;
-					msg("Goto Hex Address: ");
+					clearstr();
+					outmsg("Goto Hex Address:");
 					refresh();
-					getcmdstr(cmdstr, 19);
+					getcmdstr(cmdstr, 18);
+					clearstr();
 					if (cmdstr[0] == '^') {
 						inaddr = P(P_OF);
 					} else if (cmdstr[0] == '$') {
 						inaddr = filesize + P(P_OF) - 1L;
 					} else {
-						long ltmp;
-						sscanf(cmdstr, "%lx", &ltmp);
-						inaddr = (off_t)ltmp;
+						off_t ltmp;
+						sscanf(cmdstr, "%llx", (long long unsigned *)&ltmp);
+						inaddr = ltmp;
 					}
 					if (inaddr < P(P_OF)) break;
 					inaddr -= P(P_OF);
@@ -485,8 +519,7 @@ main(argc, argv)
 						setpage(mem + inaddr);
 					} else {
 						if (filesize == 0L) break;
-						sprintf(string, "Max. address of current file : %06lX",
-							(long)(filesize - 1L + P(P_OF)));
+						sprintf(string, "Max. address of current file : %06llX", (long long unsigned)(filesize - 1L + P(P_OF)));
 						emsg(string);
 					}
 					break;
@@ -498,11 +531,23 @@ main(argc, argv)
 					refresh();
 					if (getcmdstr(line, 1)) break;
 					last_motion = current;
+					hl_spat = P(P_HL);
 					searching(ch, line, current, maxpos - 1, P(P_WS));
+					if (hl_spat) {
+						repaint();
+					}
+					break;
+		case ESC:		/* un-highlight */
+					hl_spat = FALSE;
+					repaint();
 					break;
 		case 'n': 		/**** Search Next ****/
 		case 'N':   last_motion = current;
+					hl_spat = P(P_HL);
 					searching(ch, "", current, maxpos - 1, P(P_WS));
+					if (hl_spat) {
+						repaint();
+					}
 					break;
 		case 'm':	do_mark(vgetc(), current);
 					break;
@@ -537,7 +582,7 @@ main(argc, argv)
 					if ((undo_count = alloc_buf(yanked, &undo_buf)) == 0L)
 						break;
 					sprintf(rep_buf, "%ldP", precount);
-					if (do_append(yanked, yank_buf)) break;
+					if (do_append((off_t)yanked, yank_buf)) break;
 					/* we save it not for undo but for the dot command
 					memcpy(undo_buf, yank_buf, yanked);
 					*/
@@ -553,20 +598,25 @@ main(argc, argv)
 		case 'u':	do_undo();
 					break;
 		case 'W':
-		case 'w':	loc = ASCII;
+		case 'w':	// loc = ASCII;
 					setpage(wordsearch(current, ch));
 					break;
 		case 'y':	count = range(ch);
 					if (count > 0) {
-						if ((yanked = alloc_buf(count, &yank_buf)) == 0L) {
+/*
+  sprintf(string, "$%ld$", (long)yanked);
+  msg(string);
+  vgetc();
+*/
+						if ((yanked = alloc_buf((off_t)count, &yank_buf)) == 0L) {
 							break;
 						}
 						memcpy(yank_buf, current, yanked);
 					} else if (count < 0) {
-						if ((yanked = alloc_buf(-count, &yank_buf)) == 0L) {
+						if ((yanked = alloc_buf(-(off_t)count, &yank_buf)) == 0L) {
 							break;
 						}
-						memcpy(yank_buf, current + count, yanked);
+						memcpy(yank_buf, current, yanked);
 					} else {
 						break;
 					}
@@ -630,11 +680,6 @@ main(argc, argv)
 						precount = 1;
 						undo_count = edit('i');
 						lflag++;
-/*
-					} else if (count) {
-						sprintf(string, "%ld bytes deleted", labs(count));
-						msg(string);
-*/
 					}
 					break;
 				case 'x':
@@ -683,13 +728,20 @@ off_t
 calc_size(arg)
 	char	*arg;
 {
-	long	val;
+	off_t	val;
+	extern int errno;
 	char	*poi;
 
-	if (*arg == '0') {
-		val = strtol(arg, &poi, 16);
-	} else {
-		val = strtol(arg, &poi, 10);
+	errno = 0;
+	val = strtoll(arg, &poi, 0);
+	if (val < 0) {
+		fprintf(stderr, "negative begin/size/end not allowed\n");
+		usage();
+	}
+	if (poi == arg || errno != 0) {
+		/* cygwin gdb displays errno incorrectly as 0 */
+		fprintf(stderr, "invalid begin/size/end (hex nr 0x#, octal 0#)\n");
+		usage();
 	}
 	switch (*poi) {
 	case 'k':
@@ -698,6 +750,9 @@ calc_size(arg)
 	case 'm':
 	case 'M':	val *= 1048576;
 			 	break;
+	case 'g':
+	case 'G':   val *= 1024*1024*1024LL;
+				break;
 	case '\0':	break;
 	default:	usage();
 	}
@@ -723,7 +778,7 @@ trunc_cur()
 
 int
 do_append(count, buf)
-	int		count;
+	off_t	count;
 	char	*buf;
 {
 	if (filesize + count > memsize) {

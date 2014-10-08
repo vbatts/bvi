@@ -9,8 +9,8 @@ and is distributed under the GPL (GNU Public License).
 How to compile
 ==============
 
-	gunzip -c bvi-1.3.2.tar.gz | tar xvf -
-	cd bvi-1.3.2
+	gunzip -c bvi-1.4.0.src.tar.gz | tar xvf -
+	cd bvi-1.4.0
 	./configure
 	make
 	make install

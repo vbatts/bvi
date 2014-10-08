@@ -11,8 +11,10 @@
  * 2000-07-15 V 1.3.0 final
  * 2001-10-10 V 1.3.1 
  * 2003-07-03 V 1.3.2
+ * 2010-06-02 V 1.2.4
+ * 2014-09-30 V 1.4.0
  *
- * Copyright 1996-2003 by Gerhard Buergmann 
+ * Copyright 1996-2014 by Gerhard Buergmann 
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -33,8 +35,8 @@
 
 static	int		from_file = 0;
 static	FILE	*ffp;
-static	char	fbuf[256];
-static	char	buf[64];
+static	char	fbuf[MAXCMD+1];
+static	char	buf[MAXCMD+1];
 
 struct	param	params[] = {
 	{ "autowrite",	"aw",		FALSE,	"",	P_BOOL },
@@ -53,6 +55,7 @@ struct	param	params[] = {
 	{ "window",		"window",	25,		"",	P_NUM },
 	{ "wordlength",	"wl",		4,		"",	P_NUM },
 	{ "wrapscan",	"ws",		TRUE,	"",	P_BOOL },
+	{ "highlight",  "hl",       TRUE,   "", P_BOOL },
 #if defined(__MSDOS__) && !defined(DJGPP)
 	{ "color",		"co",		7,		"",	P_NUM  },
 #endif
@@ -99,8 +102,9 @@ doset(arg)
 				sprintf(buf, "      %s=%s", params[i].fullname,
 					params[i].svalue);
 			else
-				sprintf(buf, "      %s=%ld", params[i].fullname,
-					params[i].nvalue);
+
+				sprintf(buf, "      %s=%lld", params[i].fullname,
+					(long long)params[i].nvalue);
 			msg(buf);
 			return 0;
 		}
@@ -117,11 +121,7 @@ doset(arg)
 				return 1;
 			} else {
 				s = arg + strlen(s) + 1;
-				if (*s == '0') {
-					params[i].nvalue = strtol(s, &s, 16);
-				} else {
-					params[i].nvalue = strtol(s, &s, 10);
-				}
+				params[i].nvalue = strtoll(s, &s, 0);
 				params[i].flags |= P_CHANGED;
 #if defined(__MSDOS__) && !defined(DJGPP)
 				if (i == P_CO) {
@@ -152,6 +152,10 @@ doset(arg)
 			} else {
 				params[i].nvalue = state;
 				params[i].flags |= P_CHANGED;
+				if (i == P_HL && state == FALSE) {
+					hl_spat = FALSE;
+					repaint();
+				}
 			}
 		}
 	} else  {
@@ -187,7 +191,7 @@ showparms(all)
 		else if (p->flags & P_TEXT)
 			sprintf(buf, "      %s=%s\n", p->fullname, p->svalue);
 		else
-			sprintf(buf, "      %s=%ld\n", p->fullname, p->nvalue);
+			sprintf(buf, "      %s=%lld\n", p->fullname, (long long)p->nvalue);
 
 		msg(buf);
 		n++;
@@ -205,10 +209,13 @@ int
 read_rc(fn)
 	char *fn;
 {
-	if((ffp = fopen(fn, "r")) == NULL) return -1;
+	int i;
+
+	if ((ffp = fopen(fn, "r")) == NULL) return -1;
 	from_file = 1;
-	while(fgets(fbuf, 255, ffp) != NULL) {
-		strtok(fbuf, "\n\r");
+	while (fgets(fbuf, MAXCMD, ffp) != NULL) {
+		i = strlen(fbuf) - 1;
+		while ((i >= 0) && (fbuf[i] == NL || fbuf[i] == CR)) fbuf[i--] = '\0';
 		docmdline(fbuf);
 	}
 	fclose(ffp);
@@ -245,7 +252,7 @@ do_logic(mode, str)
 		} else if (str[0] == 'b' || str[0] == 'B') {
 			value = strtol(str + 1, NULL, 2);
 		} else if (str[0] == '0') {
-			value = strtol(str, NULL, 16);
+			value = strtol(str, NULL, 0);
 			for (n = 0; n < strlen(str); n++) {
 				if (!isxdigit(str[n])) {
 					value = -1;
@@ -311,12 +318,14 @@ getcmdstr(p, x)
 	int		x;
 {
 	int		c;
-	int		n;
+	int		i, n;
 	char	*buff, *q;
 
 	if (from_file) {
-		if(fgets(p, 255, ffp) != NULL) {
-			strtok(p, "\n\r");
+		if (fgets(p, 255, ffp) != NULL) {
+			// strtok(p, "\n\r");
+			i = strlen(p) - 1;
+			while ((i >= 0) && (p[i] == NL || p[i] == CR)) p[i--] = '\0';
 			return 0;
 		} else {
 			return 1;
@@ -329,6 +338,7 @@ getcmdstr(p, x)
     do {
         switch (c = vgetc()) {
 		case BVICTRL('H'):
+		case ASCII_DEL:
 		case KEY_BACKSPACE:
 		case KEY_LEFT:
             if (p > buff) {
@@ -359,6 +369,9 @@ getcmdstr(p, x)
 #if CR != KEY_ENTER
         case CR:
 #endif
+		case KEY_RIGHT:
+		case KEY_UP:
+		case KEY_DOWN:
 		case KEY_ENTER:
             break;
         default:        /* a normal character */
