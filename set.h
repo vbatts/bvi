@@ -2,7 +2,7 @@
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2014 by Gerhard Buergmann
+ * Copyright 1996-2019 by Gerhard Buergmann
  * Gerhard.Buergmann@puon.at
  *
  * 1998-03-14 V 1.0.0
@@ -13,10 +13,11 @@
  * 2000-08-21 V 1.3.0 final
  * 2010-06-02 V 1.3.4
  * 2013-08-23 V 1.4.0
+ * 2019-01-22 V 1.4.1
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any
+ * Free Software Foundation; either version 3, or (at your option) any
  * later version.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -67,7 +68,8 @@ extern	struct	param	params[];
 #define P_WL		14	/* Wordlength for w, W, b, B command */
 #define	P_WS		15	/* wrapscan */
 #define P_HL		16	/* highlight search enabled */
-#define	P_CO		17	/* color/attribute setting */
+#define P_RE		17  /* reverse video */
+#define	P_CO		18	/* color/attribute setting */
 
 /*
  * Macro to get the value of a parameter

@@ -11,13 +11,14 @@
  * 2003-07-04 V 1.3.2
  * 2006-04-05 V 1.3.3 alpha - binary representation
  * 2014-09-30 V 1.4.0
+ * 2019-10-12 V 1.4.1
  *
- * Copyright 1996-2014 by Gerhard Buergmann
+ * Copyright 1996-2019 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any
+ * Free Software Foundation; either version 3, or (at your option) any
  * later version.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -474,17 +475,6 @@ statpos()
 	}
 	Char1 = *(mem + bytepos);
 
-	if (isprint(Char1)) {
-		sprintf(str, "'%c'", Char1);
-	} else if (Char1 < 32) {
-		if (P(P_US))	strcpy(str, contru[Char1]);
-			else        strcpy(str, contrd[Char1]);
-	} else if (Char1 == 127) {
-		if (P(P_US))    strcpy(str, contru[32]);
-			else        strcpy(str, contrd[32]);
-	} else {
-		strcpy(str, "   ");
-	}
 	for (i = 0; i < 8; ++i) {
 		if(Char1 & (1<<i)) {
 			bin_val[7-i] = '1';
@@ -494,11 +484,39 @@ statpos()
 	}
 	bin_val[8] = '\0';
 	
-	statsize = sprintf(string, "%08llX %s \\%03o 0x%02X %3d %3s",
-		(long long)(bytepos + P(P_OF)), bin_val, Char1, Char1, Char1, str);
+	sprintf(string, "%08llX %s \\%03o 0x%02X %3d ",
+		(long long)(bytepos + P(P_OF)), bin_val, Char1, Char1, Char1);
 	attrset(A_BOLD);
 	status = maxx - 1 - statsize;
 	mvaddstr(maxy, status, string);
+
+	if (isprint(Char1)) {
+		sprintf(str, "'%c'", Char1);
+		addstr(str);
+	} else if (Char1 < 32) {
+		if (P(P_US))	strcpy(str, contru[Char1]);
+			else        strcpy(str, contrd[Char1]);
+		addstr(str);
+	} else if (Char1 == 127) {
+		if (P(P_US))    strcpy(str, contru[32]);
+			else        strcpy(str, contrd[32]);
+		addstr(str);
+	} else {
+		if (P(P_RE)) {
+			if ((Char1 & 128) && ((Char1 > 159) && (Char1 < 255))) {
+				addstr("'");
+				attrset(A_REVERSE);
+				sprintf(str, "%c", Char1 & 127);
+				addstr(str);
+				attrset(A_BOLD);
+				addstr("'");
+			} else {
+				addstr("   ");
+			}
+		} else {
+			addstr("   ");
+		}
+	}
 	attrset(A_NORMAL);
 }
 
@@ -508,7 +526,6 @@ printline(mempos, scpos)
 	PTR	mempos;
 	int	scpos;
 {
-	/* int		print_pos; */
 	PTR			hl_start = 0;
 	PTR			hl_end = 0;
 	PTR			f_start = 0;
@@ -574,16 +591,34 @@ printline(mempos, scpos)
 			sprintf(tmpbuf, "%02X ", cur_ch);
 		}
 		strcat(linbuf, tmpbuf);
-		if (isprint(cur_ch))
-			*(string + print_pos) = cur_ch;
-		else
-			*(string + print_pos) = '.';
 	}
 	mvaddstr(scpos, mv_pos, linbuf);
-	mv_pos = AnzAdd + (3 * print_pos);
 	attrset(A_NORMAL);
-	*(string + Anzahl) = '\0';
-	mvaddstr(scpos, mv_pos, string);
+
+	for (print_pos = 0; print_pos < Anzahl; print_pos++) {
+		if (mempos + print_pos < maxpos) {
+			cur_ch = *(mempos + print_pos);
+			if (isprint(cur_ch)) {
+				sprintf(string, "%c", cur_ch);
+				addstr(string);
+			} else {
+				if (P(P_RE)) {
+					if ((cur_ch & 128) && ((cur_ch > 159) && (cur_ch < 255))) {
+						attrset(A_REVERSE);
+						sprintf(string, "%c", cur_ch & 127);
+						addstr(string);
+						attrset(A_NORMAL);
+					} else {
+			    		addstr(".");
+					}
+				} else {
+			    	addstr(".");
+				}
+			}
+		} else {
+			addstr(" ");
+		}
+	}
 }
 
 

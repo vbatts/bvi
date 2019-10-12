@@ -93,7 +93,7 @@
 .nr % 0
 .rr F
 .\}
-.TH BVI 1 "BVI Version 1.4.0" "25/Aug/2013" "User Commands"
+.TH BVI 1 "BVI Version 1.4.1" "30/Jan/2019" "User Commands"
 .IX Title "BVI 1"
 .UC
 .IX Name "bvi, bview - visual display editor for binary files"
@@ -194,7 +194,7 @@
 bvi, bview \- visual editor for binary files
 .SH "VERSION"
 .IX Header "VERSION"
-bvi-1.4.0
+bvi-1.4.1
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 \fBbvi\fR\ \ \ [\fB\-R\fR]\ [\fB\-c\fR\ \fIcmd\fR]\ [\fB\-f\fR\ \fIscript\fR]\ [\fB\-s\fR\ \fIskip\fR]\ [\fB\-e\fR\ \fIend\fR]\ [\fB\-n\fR\ \fIlength\fR]\ \fIfile\fR...
@@ -248,9 +248,10 @@ can use this option to make several global changes in a binary file.
 Bvi stands for \*(L"Binary VIsual editor\*(R".
 Bvi is a screen oriented editor for binary files;
 its command set is based on that of the \fIvi\fR\|(1) text editor.
-As a binary editor does not have the concept of \*(L"lines\*(R"
-there are differences from Vi commands wherever the latter are
-line orientate.
+As bvi is a binary editor, it does not have the concept
+of \*(L"lines\*(R".  All end-of-lines (EOLs) are simply bytes.
+Therefore bvi's commands are different from vi's
+commands for all line-oriented commands (see below).
 .SH "COMPARISON"
 .IX Header "COMPARISON"
 The main differences between Vi and Bvi are:
@@ -585,6 +586,8 @@ the file. If you use ASCII mode you can use the special characters
 \&  memmove    nomm     enables insert and delete commands 
 \&  offset     of=0     adds an offset to the diplayed addresses
 \&  readonly   noro     If set, write fails unless you use ! after command
+\&  reverse    nore     display otherwise-printable characters with their
+\&                      high bit set as reverse video
 \&  scroll     sc=1/2 window
 \&                      Number of lines scrolled by ^U and ^D
 \&  showmode   mo       Displays statusline on bottom of the screen
@@ -600,7 +603,7 @@ the file. If you use ASCII mode you can use the special characters
 .SH "AUTHOR"
 .IX Header "AUTHOR"
 bvi was developed by Gerhard Buergmann, Vienna, Austria
-\fIGerhard.Buergmann@puon.at\fR
+\fIgerhard@puon.at\fR
 .SH "WWW"
 .IX Header "WWW"
 Bvi\ Homepage:\ \ http://bvi.sourceforge.net/
@@ -609,12 +612,13 @@ Vi\ Pages:\ \ \ \ \ \ http://www.guckes.net/vi/clones.php3
 .SH "FILES"
 .IX Header "FILES"
 \fI\ $HOME/.bvirc\fR\ \ \ \ \ \ \ \ \ \ editor\ startup\ file
+.BR
 \fI\ ./.bvirc\fR\ \ \ \ \ \ \ \ \ \ \ \ \ \ editor\ startup\ file
 .SH "BUGS"
 .IX Header "BUGS"
 Bvi does not update the screen when the terminal changes its size.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-\fIvi\fR\|(1), \fIstrings\fR\|(1), \fIascii\fR\|(5)
+\fIbmore\fR\|(1), \fIvi\fR\|(1), \fIstrings\fR\|(1), \fIascii\fR\|(5)
 
 .rn }` ''

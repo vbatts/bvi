@@ -9,8 +9,12 @@ and is distributed under the GPL (GNU Public License).
 How to compile
 ==============
 
-	gunzip -c bvi-1.4.0.src.tar.gz | tar xvf -
-	cd bvi-1.4.0
+	You need the curses (ncurses) library for cursor movement on your system. 
+	https://www.cyberciti.biz/faq/linux-install-ncurses-library-headers-on-debian-ubuntu-centos-fedora/
+
+
+	gunzip -c bvi-1.4.1.src.tar.gz | tar xvf -
+	cd bvi-1.4.1
 	./configure
 	make
 	make install
@@ -23,9 +27,12 @@ You should install and use ncurses instead. You can download it from
 ftp.gnu.org; install it and then use
 	./configure --with-ncurses=/usr/local/ncurses-5.2
 
+The Control-y key sequence suspends bvi and send it to the background.
+To avoid this behaviour use:
+	stty dsusp undef
 
-HTML documentation in subdirectory html/
 
+---------------------------------------------------------------------------
 Subscribe to the bvi mailing for support, updates and other news:
 
 	Send a blank email to bvi-subscribe@yahoogroups.com. You will receive a
@@ -33,7 +40,7 @@ Subscribe to the bvi mailing for support, updates and other news:
 	subscription will be complete. 
 
 
-------------------------------------------------------------------------
+---------------------------------------------------------------------------
 PLEASE send any bug reports (and fixes), code for new features,
 comments, questions, etc. (even flames) to:
 

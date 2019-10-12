@@ -11,15 +11,16 @@
  * 2003-07-04  V 1.3.2
  * 2010-08-04  V 1.3.4
  * 2014-10-01  V 1.4.0
+ * 2019-01-28  V 1.4.1
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2014 by Gerhard Buergmann
+ * Copyright 1996-2019 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any
+ * Free Software Foundation; either version 3, or (at your option) any
  * later version.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -223,6 +224,7 @@ extern  off_t   block_begin, block_end, block_size;
 	int		do_substitution(int, char *, PTR, PTR);
 	int		hexchar(void);
 	int		outmsg(char *);
+	int		save_chk(char *, char *, char *, int);
 	PTR		searching(int, char *, PTR, PTR, int);
 	PTR		wordsearch(PTR, char);
 	PTR		backsearch(PTR, char);
@@ -267,6 +269,7 @@ extern  off_t   block_begin, block_end, block_size;
 	int		do_substitution();
 	int		hexchar();
 	int		outmsg();
+	int		save_chk();
 	PTR		searching();
 	PTR		wordsearch();
 	PTR		backsearch();

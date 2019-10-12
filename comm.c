@@ -13,15 +13,16 @@
  * 2005-08-17 V 1.3.3
  * 2010-06-02 V 1.3.4
  * 2014-01-28 V 1.4.0
+ * 2019-01-27 V 1.4.1
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2014 by Gerhard Buergmann
+ * Copyright 1996-2019 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any
+ * Free Software Foundation; either version 3, or (at your option) any
  * later version.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -478,7 +479,7 @@ docmdline(cmdline)
 		if ((yanked = yd_addr()) == 0L) return;
 		if ((yanked = alloc_buf(yanked, &yank_buf)) == 0L) return;
 		memcpy(yank_buf, start_addr, yanked);
-		sprintf(string, "%lu bytes", (long)yanked);
+		sprintf(string, "%lu bytes", (unsigned long)yanked);
 		msg(string);
 	} else if (!strncmp("overwrite", cmdname, len) && CMDLNG(9, 1)) {
 		if (chk_comm(NO_ARG)) return;
@@ -565,7 +566,7 @@ docmdline(cmdline)
 			if (!strncmp("delete", cmdname, len) && CMDLNG(6, 1)) {
 				if ((undo_count = yd_addr()) == 0L) return;
 				do_delete(undo_count, start_addr);
-				sprintf(string, "%lu bytes", (long)undo_count);
+				sprintf(string, "%lu bytes", (unsigned long)undo_count);
 				msg(string);
 			} else if (!strncmp("insert", cmdname, len) && CMDLNG(6, 1)) {
 				if (chk_comm(MAX_ONE_ARG)) return;
@@ -674,7 +675,7 @@ doecmd(arg, force)
 	}
 	if (arg != NULL) {
 		if (name != NULL && !strcmp(arg, name)) {
-			if (!edits || (edits && !force))
+			if (!edits || !force)
 				return TRUE;
 		}
 		if (name != NULL && !strcmp(arg, "#")) {
@@ -806,7 +807,8 @@ outmsg(s)
 		poi = s;
 		while (*poi != '\0' && *poi != '@' && *poi != '|') {
 			addch(*poi++);
-			cnt++; }
+			cnt++;
+		}
 	} else {
     	if (poi) poi++;
 			else poi = s;
@@ -819,6 +821,7 @@ outmsg(s)
 	}
 	return cnt;
 }
+
 
 /* If flag == TRUE we do a repaint
  *

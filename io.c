@@ -10,15 +10,16 @@
  * 2004-01-04 V 1.3.2
  * 2010-06-02 V 1.3.4
  * 2014-05-03 V 1.4.0
+ * 2019-01-27 V 1.4.1
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2014 by Gerhard Buergmann
+ * Copyright 1996-2019 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any
+ * Free Software Foundation; either version 3, or (at your option) any
  * later version.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -59,6 +60,7 @@ static	struct	stat	buf;
 static	off_t	block_read;
 char	*terminal;
 
+extern	char	*fname_buf;
 
 /*********** Save the patched file ********************/
 int
@@ -154,7 +156,7 @@ load(fname)
 	char	*fname;
 {
 	int		fd = -1;
-	char	*string;
+	//char	*string;
 
 	buf.st_size = 0L;
 	if (fname != NULL) {
@@ -243,12 +245,13 @@ load(fname)
 	}
 	clear_marks();
 
+	if (fname_buf) free(fname_buf);
 	if (fname != NULL) {
-		string = malloc((size_t)strlen(fname) + MAXCMD);
+		fname_buf = malloc((size_t)strlen(fname) + MAXCMD);
 	} else {
-		string = malloc(MAXCMD);
+		fname_buf = malloc(MAXCMD);
 	}
-	if (string == NULL) {
+	if (fname_buf == NULL) {
 		emsg("Out of memory");
 		return 0;
 	}
@@ -259,10 +262,10 @@ load(fname)
 			filemode = ERROR;
 		} else {
 			if ((filesize = read(fd, mem, block_size)) == 0) {
-				sprintf(string, "\"%s\" Empty file", fname);
+				sprintf(fname_buf, "\"%s\" Empty file", fname);
 				filemode = ERROR;
 			} else {
-				sprintf(string, "\"%s\" range %llu-%llu", fname,
+				sprintf(fname_buf, "\"%s\" range %llu-%llu", fname,
 					(unsigned long long)block_begin,
 					(unsigned long long)(block_begin + filesize - 1));
 				filemode = PARTIAL;
@@ -270,7 +273,7 @@ load(fname)
 				P(P_OF) = block_begin;
 				params[P_OF].flags |= P_CHANGED;
 			}
-			msg(string);
+			msg(fname_buf);
 			refresh();
 		}
 	} else if ((filemode == REGULAR) || (filemode == DIRECTORY)) {
@@ -286,31 +289,31 @@ load(fname)
 	if (fname != NULL) {
 		switch (filemode) {
 		case NEW:
-			sprintf(string, "\"%s\" [New File]", fname);
+			sprintf(fname_buf, "\"%s\" [New File]", fname);
 			break;
 		case REGULAR:
-			sprintf(string, "\"%s\" %s%llu bytes", fname,
+			sprintf(fname_buf, "\"%s\" %s%llu bytes", fname,
 				P(P_RO) ? "[Read only] " : "",
 				(unsigned long long)filesize);
 			break;
 		case DIRECTORY:
-			sprintf(string, "\"%s\" Directory", fname);
+			sprintf(fname_buf, "\"%s\" Directory", fname);
 			break;
 		case CHARACTER_SPECIAL:
-			sprintf(string, "\"%s\" Character special file", fname);
+			sprintf(fname_buf, "\"%s\" Character special file", fname);
 			break;
 		case BLOCK_SPECIAL:
-			sprintf(string, "\"%s\" Block special file", fname);
+			sprintf(fname_buf, "\"%s\" Block special file", fname);
 			break;
 		}
-		if (filemode != ERROR) msg(string);
+		if (filemode != ERROR) msg(fname_buf);
 	}
 	pagepos = mem;
 	maxpos = mem + filesize;
 	loc = HEX;
 	x = AnzAdd; y = 0;
 	repaint();
-	free(string);
+	//free(string);
 	return(filesize);
 }
 

@@ -13,13 +13,14 @@
  * 2003-07-03 V 1.3.2
  * 2010-06-02 V 1.2.4
  * 2014-09-30 V 1.4.0
+ * 2019-01-22 V 1.4.1
  *
- * Copyright 1996-2014 by Gerhard Buergmann 
+ * Copyright 1996-2019 by Gerhard Buergmann 
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any
+ * Free Software Foundation; either version 3, or (at your option) any
  * later version.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -56,6 +57,7 @@ struct	param	params[] = {
 	{ "wordlength",	"wl",		4,		"",	P_NUM },
 	{ "wrapscan",	"ws",		TRUE,	"",	P_BOOL },
 	{ "highlight",  "hl",       TRUE,   "", P_BOOL },
+	{ "reverse",    "re",       FALSE,  "", P_BOOL },
 #if defined(__MSDOS__) && !defined(DJGPP)
 	{ "color",		"co",		7,		"",	P_NUM  },
 #endif
@@ -154,6 +156,9 @@ doset(arg)
 				params[i].flags |= P_CHANGED;
 				if (i == P_HL && state == FALSE) {
 					hl_spat = FALSE;
+					repaint();
+				}
+				if (i == P_RE) {
 					repaint();
 				}
 			}

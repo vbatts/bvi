@@ -5,13 +5,14 @@
  * 1996-01-06 created;
  * 2000-04-25 V 1.3.0 beta
  * 2000-07-12 V 1.3.0 final
+ * 2019-01-28 V 1.4.1
  *
- * Copyright 1996-2002 by Gerhard Buergmann
- * Gerhard.Buergmann@puon.at
+ * Copyright 1996-2019 by Gerhard Buergmann
+ * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any
+ * Free Software Foundation; either version 3, or (at your option) any
  * later version.
  *
  * This program is distributed in the hope that it will be useful, but

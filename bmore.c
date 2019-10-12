@@ -7,15 +7,16 @@
  * 2002-01-16  V 1.3.1
  * 2004-01-09  V 1.3.2
  * 2013-08-23  V 1.4.0
+ * 2019-01-22  V 1.4.1
+ *
+ * Copyright 1990-2019 by Gerhard Buergmann
+ * gerhard@puon.at
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1990-2013 by Gerhard Buergmann
- * gerhard@puon.at
- *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any
+ * Free Software Foundation; either version 3, or (at your option) any
  * later version.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -48,7 +49,7 @@
 
 #include "bmore.h"
 
-char	*copyright  = "Copyright (C) 1990-2013 by Gerhard Buergmann";
+char	*copyright  = "GPL (C) 1990-2019 by Gerhard Buergmann";
 
 int		maxx, maxy;
 int		mymaxx = 0, mymaxy = 0;
@@ -70,7 +71,7 @@ char	addr_form[15];
 
 int		ascii_flag = 0;
 int		dup_print_flag = 0;
-int		c_flag = 0, d_flag = 0;
+int		c_flag = 0, d_flag = 0, r_flag = 0;
 int		exval = 0;
 int		init_search = 0;
 char	buffer1[MAXCMD], buffer2[MAXCMD];
@@ -99,12 +100,13 @@ char	*emptyclass = "Empty byte class '[]' or '[^]'";
  * -c	clear before displaying
  * -i   ignore case
  * -n	number of lines/screen
+ * -r	display reverse video (highest bit set)
  * -w   width of screen
  */
 void
 usage()
 {
-	fprintf(stderr, "Usage: %s [-acdi] [-lines] [+linenum | +/pattern] name1 name2 ...\n", progname);
+	fprintf(stderr, "Usage: %s [-acdir] [-lines] [+linenum | +/pattern] name1 name2 ...\n", progname);
 	exit(1);
 }
 
@@ -172,6 +174,8 @@ main(argc, argv)
 								break;
 					case 'i':	ignore_case++;
 								break;
+					case 'r':	r_flag++;
+								break;
 					default:		
 								usage();
 					}
@@ -215,10 +219,13 @@ main(argc, argv)
 		}
 	} else {
 		file_nr = 1;
-		while (open_file(name)) {
+		while (open_file(name)) {	/* looking for the first existing file */
 			do_next(1);
 		}
 		if (exval) {
+			/* We dont't have one! */
+			reset_tty();
+			exit(exval);
 		} else {
 			fseeko(curr_file, init_byte, SEEK_SET);
 			bytepos += init_byte;
@@ -621,6 +628,7 @@ open_file(name)
 		exval = 1;
 		return 1;
 	}
+	exval = 0;
 	bytepos = screen_home = 0;
 	return 0;
 }
@@ -635,27 +643,47 @@ putline(buf, num)
 	unsigned	char	ch;
 
 	PRINTF(addr_form, (unsigned long)bytepos);
-	for (print_pos = 0; print_pos < num; print_pos++) {
-		ch = buf[print_pos];
-		if (!ascii_flag) {
+
+	// Hex section
+	if (!ascii_flag) {
+		for (print_pos = 0; print_pos < num; print_pos++) {
+			ch = buf[print_pos];
 		    PRINTF("%02X ", ch);
 		}
-		++bytepos;
-		if ((ch > 31) && (ch < 127))
-			*(string + print_pos) = ch;
-		else
-			*(string + print_pos) = '.';
-	}
-	for (; print_pos < out_len; print_pos++) {
-		if (!ascii_flag) {
+		for (; print_pos < out_len; print_pos++) {
 		    PRINTF("   ");
 		}
-		++bytepos;
-		*(string + print_pos) = ' ';
+		PRINTF(" ");
 	}
-	*(string + num) = '\0';
-	if (no_tty) PRINTF("%s\n", string);
-	else PRINTF("%s\r\n", string);
+	
+	// ASCII section
+	for (print_pos = 0; print_pos < num; print_pos++) {
+		++bytepos;
+		ch = buf[print_pos];
+		if ((ch > 31) && (ch < 127)) {
+		    PRINTF("%c", ch);
+		} else {
+			if (r_flag) {
+				if ((ch & 128) && ((ch > 159) && (ch < 255))) {
+					if (!no_tty) highlight();
+		    		PRINTF("%c", ch & 127);
+					if (!no_tty) normal();
+				} else {
+		    		PRINTF(".");
+				}
+			} else {
+		    	PRINTF(".");
+			}
+		}
+	}
+
+	// Fill last line
+	for (; print_pos < out_len; print_pos++) {
+		++bytepos;
+		PRINTF(" ");
+	}
+	if (no_tty) PRINTF("\n");
+	else PRINTF("\r\n");
 }
 
 

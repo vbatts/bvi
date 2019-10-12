@@ -12,15 +12,16 @@
  * 2006-04-04  V 1.3.3
  * 2013-08-23  V 1.4.0alpha
  * 2014-10-07  V 1.4.0
+ * 2019-10-12  V 1.4.1
  *
  * NOTE: Edit this file with tabstop=4 !
  *
- * Copyright 1996-2014 by Gerhard Buergmann
+ * Copyright 1996-2019 by Gerhard Buergmann
  * gerhard@puon.at
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any
+ * Free Software Foundation; either version 3, or (at your option) any
  * later version.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -41,7 +42,7 @@
 #endif
 
 
-char	*copyright  = "Copyright (C) 1996-2014 by Gerhard Buergmann";
+char	*copyright  = "(C) GPL 1996-2019 by Gerhard Buergmann";
 
 jmp_buf	env;        /* context for `longjmp' function   */
 
@@ -88,6 +89,7 @@ off_t	undo_count;
 off_t	yanked = 0L;
 char	*yank_buf = NULL;
 char	*undo_buf = NULL;
+char	*fname_buf = NULL;
 PTR		markbuf[26];
 
 char	addr_form[15];
@@ -264,20 +266,18 @@ main(argc, argv)
 	cbreak();
 	noecho();
 
-	{
-       /* address column width */
-       /*  default is 8 + 2 blanks  */
-       /* if block_begin has 8 hex digits or more */
-       /* reserve 1 hex digit more than required  */
-       char tmp[sizeof(block_begin) * 2 + 3];
-       AnzAdd = sprintf(tmp, "%llX", (long long unsigned)block_begin) + 1;
-       if (AnzAdd < 8)
-           AnzAdd = 8;
-       if (AnzAdd > sizeof(block_begin) * 2)
-           AnzAdd = sizeof(block_begin) * 2;
-       sprintf(addr_form,  "%%0%dllX  ", AnzAdd);
-       AnzAdd = sprintf(tmp, addr_form, block_begin);
-	}
+    /* address column width */
+    /*  default is 8 + 2 blanks  */
+    /* if block_begin has 8 hex digits or more */
+    /* reserve 1 hex digit more than required  */
+    char tmp[sizeof(block_begin) * 2 + 3];
+    AnzAdd = sprintf(tmp, "%llX", (long long unsigned)block_begin) + 1;
+    if (AnzAdd < 8)
+        AnzAdd = 8;
+    if (AnzAdd > sizeof(block_begin) * 2)
+        AnzAdd = sizeof(block_begin) * 2;
+    sprintf(addr_form,  "%%0%dllX  ", AnzAdd);
+    AnzAdd = sprintf(tmp, addr_form, block_begin);
 
 	Anzahl = ((COLS - AnzAdd - 1) / 16) * 4;
 	P(P_CM) = Anzahl;
@@ -300,6 +300,7 @@ main(argc, argv)
 		read_rc(argv[script]);
 	if (*cmdstr != '\0')
 		docmdline(cmdstr);
+	msg(fname_buf);
 	
 	/* main loop */
 	do {
